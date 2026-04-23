@@ -16,20 +16,19 @@ export default function TeacherLayout({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${API}/auth/me`, {
-          credentials: "include", // ⬅️ ambil cookie
-        });
-
-        if (!res.ok) {
-          router.replace("/login"); // ⛔ pakai replace
-        } else {
-          setLoading(false);
-        }
+        // ✅ Menggunakan axios (api) yang sudah kita buat
+        // withCredentials sudah otomatis ikut dari config lib/api.js
+        const res = await api.get("/auth/me");
+  
+        // Jika sukses (status 200), matikan loading agar dashboard muncul
+        setLoading(false);
       } catch (err) {
-        router.replace("/login");
+        // ✅ Jika error (401 tidak login, dsb), lempar ke halaman login
+        console.error("Auth check failed:", err);
+        router.replace("/login"); 
       }
     };
-
+  
     checkAuth();
   }, [router]);
 
