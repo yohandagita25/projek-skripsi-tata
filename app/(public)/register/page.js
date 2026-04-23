@@ -1,5 +1,5 @@
 "use client";
-
+import { api } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -38,31 +38,23 @@ const handleSubmit = async (e) => {
   setMessage("");
 
   try {
-    const res = await fetch("http://localhost:5000/api/auth/register", { // Pastikan path /api/auth sesuai dengan routes Bapak
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    });
+    // GANTI fetch lama dengan axios (api) yang sudah kita buat
+    const res = await api.post("/auth/register", form);
 
-    const data = await res.json();
+    // Axios otomatis mengubah ke JSON, jadi kita ambil dari res.data
+    setMessage("Register berhasil! Redirecting...");
+    setTimeout(() => {
+      router.push("/login");
+    }, 1500);
 
-    if (!res.ok) {
-      // Jika error dari backend, tampilkan pesan error aslinya (misal: "Email already exists")
-      setMessage(data.error || "Register gagal");
-    } else {
-      setMessage("Register berhasil! Redirecting...");
-      setTimeout(() => {
-        router.push("/login");
-      }, 1500);
-    }
-    } catch (err) {
-      console.error("Frontend Fetch Error:", err);
-      setMessage("Server error: Check if backend is running");
-    } finally {
-      setLoading(false);
-    }
+  } catch (err) {
+    console.error("Frontend Axios Error:", err);
+    // Mengambil pesan error dari backend jika ada (misal: Email sudah terdaftar)
+    const errorMsg = err.response?.data?.error || "Server error: Check if backend is running";
+    setMessage(errorMsg);
+  } finally {
+    setLoading(false);
+  }
   };
 
   return (
