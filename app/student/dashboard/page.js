@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getCourses } from "@/app/services/courseService";
-// ✅ PERBAIKAN: Import 'api' (huruf kecil) untuk pemanggilan data
+// ✅ Memastikan menggunakan api (huruf kecil) agar koneksi ke Vercel/Localhost otomatis
 import { api } from "@/lib/api"; 
 
-// IMPORT LIBRARY & CSS CUSTOM - Tetap Sama
+// IMPORT LIBRARY & CSS CUSTOM
 import Calendar from "react-calendar";
 import "./CalendarCustom.css"; 
 
@@ -25,35 +25,36 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Ambil data courses lewat service (sudah kita perbaiki sebelumnya)
+        // 1. Fetch Courses via Service
         const courses = await getCourses();
         setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
 
-        // 2. ✅ Perbaikan Auth Me (Pakai api.get)
+        // 2. Fetch User Info
         const userRes = await api.get("/auth/me");
         setUserName(userRes.data.name);
 
-        // 3. ✅ Perbaikan Activity Calendar
+        // 3. Fetch Activity Calendar
         const activityRes = await api.get("/student/activity-calendar");
         setActiveDays(activityRes.data);
 
-        // 4. ✅ Perbaikan Study Duration
+        // 4. Fetch Study Duration
         const durationRes = await api.get("/student/study-duration");
         setTotalStudyMinutes(durationRes.data.totalMinutes || 0);
 
-        // 5. ✅ Perbaikan Learning Streak
+        // 5. Fetch Streak
         const streakRes = await api.get("/student/learning-streak");
         setStreak(streakRes.data.currentStreak || 0);
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        // Jika error 401 (unauthorized), biarkan Layout yang handle redirect ke login
       } finally {
         setLoading(false);
       }
     };
     fetchDashboardData();
   }, []);
+
+  // --- LOGIC HELPER (TETAP SAMA) ---
   const getTileClass = ({ date, view }) => {
     if (view === "month") {
       const year = date.getFullYear();
@@ -93,6 +94,17 @@ export default function Dashboard() {
     );
   };
 
+  // --- LOADING STATE ---
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-950 text-white font-black tracking-tighter uppercase">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"></div>
+        Syncing Your Progress...
+      </div>
+    );
+  }
+
+  // --- UI RENDER (TETAP SAMA SESUAI DESAIN BAPAK) ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <div className="p-2 space-y-8">
@@ -104,7 +116,7 @@ export default function Dashboard() {
           <div className="w-24 h-2 bg-blue-600 mt-6 rounded-full shadow-[0_0_25px_rgba(37,99,235,0.4)]"></div>
         </div>
 
-        {/* --- STREAK SECTION BARU --- */}
+        {/* STREAK SECTION */}
         <div className="mb-12 group relative overflow-hidden rounded-[48px] border border-orange-500/20 bg-orange-500/5 p-8 shadow-2xl transition-all hover:border-orange-500/40">
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
             <div className="flex h-20 w-20 items-center justify-center rounded-[32px] bg-orange-500 shadow-[0_0_40px_rgba(249,115,22,0.4)] transition-transform duration-500 group-hover:scale-110">
@@ -114,7 +126,7 @@ export default function Dashboard() {
               <h4 className="mb-1 text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">Learning Streak</h4>
               <div className="flex items-baseline justify-center md:justify-start gap-3">
                 <span className="text-5xl font-black tracking-tighter text-white">
-                  {loading ? "..." : streak}
+                  {streak}
                 </span>
                 <span className="text-xl font-black uppercase italic tracking-widest text-orange-200/40">Hari Berturut-turut</span>
               </div>
@@ -140,7 +152,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between gap-4 relative z-10">
                 <div className="flex items-baseline gap-8">
                   <h3 className="text-3xl font-black text-white tracking-tighter leading-none">
-                    {loading ? "..." : card.value}
+                    {card.value}
                   </h3>
                   <span className="text-lg font-bold text-slate-600 uppercase tracking-normal">
                     {card.unit}
@@ -182,7 +194,7 @@ export default function Dashboard() {
               <div className="flex flex-col">
                 <span className="text-slate-500 text-xs font-black uppercase tracking-widest mb-2">Total Waktu Belajar</span>
                 <span className="text-3xl font-black text-white tracking-tighter leading-none">
-                  {loading ? "..." : formatStudyTime(totalStudyMinutes)}
+                  {formatStudyTime(totalStudyMinutes)}
                 </span>
               </div>
             </div>
