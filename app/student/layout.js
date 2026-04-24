@@ -14,8 +14,10 @@ export default function StudentLayout({ children }) {
       const res = await fetch(`${api}/auth/me`, {
         credentials: "include"
       });
+      console.log("Satpam Dashboard: Kunci Valid!", res.data);
       if (!res.ok) {
         router.push("/login");
+        console.error("Satpam Dashboard: Kunci TIDAK VALID, tendang balik ke login!", err.response?.data);
       }
     };
     checkAuth();
