@@ -8,32 +8,32 @@ import { api } from "@/lib/api";
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // ✅ PERBAIKAN: Pakai api.get, jangan fetch manual dengan ${api}
         const res = await api.get("/auth/me");
-        
-        console.log("Satpam Dashboard: Akses Diterima!", res.data);
-        setLoading(false); // Kunci valid, tampilkan dashboard
+        if (res.data.role === "student") {
+          setAuthorized(true);
+        } else {
+          // Jika role salah (misal teacher nyasar), tendang
+          window.location.replace("/login");
+        }
       } catch (err) {
-        console.error("Satpam Dashboard: Kunci Salah/Habis, Balik ke Login");
-        router.replace("/login"); // Gunakan replace agar tidak bisa 'back'
+        console.error("Gagal Validasi:", err);
+        window.location.replace("/login");
       }
     };
-
     checkAuth();
-  }, [router]);
+  }, []);
 
   // Tampilan saat mengecek token
-  if (loading) {
+  if (!authorized) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white font-black uppercase tracking-[0.3em]">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mr-4"></div>
-        Authenticating...
+        MEMVERIFIKASI AKSES...
       </div>
     );
   }
