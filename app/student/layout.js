@@ -1,10 +1,7 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/student/Navbar";
-import Sidebar from "@/components/student/Sidebar";
-import { api } from "@/lib/api"; 
+import { api } from "@/lib/api";
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
@@ -28,27 +25,11 @@ export default function StudentLayout({ children }) {
     checkAuth();
   }, []);
 
-  // Tampilan saat mengecek token
+  // ✅ Selama belum authorized, jangan tampilkan apa-apa (layar hitam/loading)
+  // Ini untuk mencegah 'flicker' atau balapan router
   if (!authorized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white font-black uppercase tracking-[0.3em]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mr-4"></div>
-        MEMVERIFIKASI AKSES...
-      </div>
-    );
+    return <div className="h-screen bg-slate-950 text-white p-10 font-black">MEMVERIFIKASI AKSES...</div>;
   }
 
-  return (
-    <div className="flex bg-slate-950 min-h-screen">
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${collapsed ? "ml-16" : "ml-64"}`}>
-        <Navbar collapsed={collapsed} />
-        
-        <main className="mt-16 p-8 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <>{children}</>; 
 }
