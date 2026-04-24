@@ -11,25 +11,21 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
     try {
-      // ✅ PERBAIKAN: Menggunakan axios (api) agar menembak ke Vercel Backend
       const res = await api.post("/auth/login", { email, password });
       
-      // Axios otomatis memasukkan data ke dalam properti .data
-      const data = res.data;
-
-      // ✅ Logika redirect tetap sama seperti kode Bapak
-      if (data.role === "teacher") {
+      // TAMBAHKAN INI UNTUK CEK:
+      console.log("Respon dari server:", res.data);
+  
+      if (res.data.role === "teacher") {
         router.push("/teacher/dashboard");
       } else {
         router.push("/student/dashboard");
       }
     } catch (err) {
-      // ✅ Menangkap error dari backend (misal: Password salah)
-      console.error("Login Error:", err);
-      const errorMsg = err.response?.data?.error || "Login gagal, silakan coba lagi";
-      alert(errorMsg);
+      // Jika login gagal, errornya akan masuk ke sini
+      console.error("Login Gagal:", err.response?.data);
+      alert(err.response?.data?.error || "Cek email/password");
     }
   };
 
