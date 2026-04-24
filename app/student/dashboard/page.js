@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getCourses } from "@/app/services/courseService";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Import 'api' (huruf kecil) untuk pemanggilan data
+import { api } from "@/lib/api"; 
 
-// IMPORT LIBRARY & CSS CUSTOM
+// IMPORT LIBRARY & CSS CUSTOM - Tetap Sama
 import Calendar from "react-calendar";
 import "./CalendarCustom.css"; 
 
@@ -18,49 +19,41 @@ export default function Dashboard() {
   const [userName, setUserName] = useState("");
   const [activeDays, setActiveDays] = useState([]);
   const [totalStudyMinutes, setTotalStudyMinutes] = useState(0); 
-  const [streak, setStreak] = useState(0); // <-- STATE BARU UNTUK STREAK
+  const [streak, setStreak] = useState(0); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // 1. Ambil data courses lewat service (sudah kita perbaiki sebelumnya)
         const courses = await getCourses();
         setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
 
-        const userRes = await fetch(`${API}/auth/me`, { credentials: "include" });
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setUserName(userData.name);
-        }
+        // 2. ✅ Perbaikan Auth Me (Pakai api.get)
+        const userRes = await api.get("/auth/me");
+        setUserName(userRes.data.name);
 
-        const activityRes = await fetch(`${API}/student/activity-calendar`, { credentials: "include" });
-        if (activityRes.ok) {
-          const activityData = await activityRes.json();
-          setActiveDays(activityData);
-        }
+        // 3. ✅ Perbaikan Activity Calendar
+        const activityRes = await api.get("/student/activity-calendar");
+        setActiveDays(activityRes.data);
 
-        const durationRes = await fetch(`${API}/student/study-duration`, { credentials: "include" });
-        if (durationRes.ok) {
-          const durationData = await durationRes.json();
-          setTotalStudyMinutes(durationData.totalMinutes || 0);
-        }
+        // 4. ✅ Perbaikan Study Duration
+        const durationRes = await api.get("/student/study-duration");
+        setTotalStudyMinutes(durationRes.data.totalMinutes || 0);
 
-        // --- FETCH DATA STREAK BARU ---
-        const streakRes = await fetch(`${API}/student/learning-streak`, { credentials: "include" });
-        if (streakRes.ok) {
-          const streakData = await streakRes.json();
-          setStreak(streakData.currentStreak || 0);
-        }
+        // 5. ✅ Perbaikan Learning Streak
+        const streakRes = await api.get("/student/learning-streak");
+        setStreak(streakRes.data.currentStreak || 0);
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        // Jika error 401 (unauthorized), biarkan Layout yang handle redirect ke login
       } finally {
         setLoading(false);
       }
     };
     fetchDashboardData();
   }, []);
-
   const getTileClass = ({ date, view }) => {
     if (view === "month") {
       const year = date.getFullYear();
