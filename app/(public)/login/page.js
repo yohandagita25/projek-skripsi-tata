@@ -14,16 +14,26 @@ export default function LoginPage() {
     try {
       const res = await api.post("/auth/login", { email, password });
       
-      const role = res.data.role?.toLowerCase(); 
-      
-      if (role === "student") {
-        window.location.replace("/student/dashboard");
-      } else if (role === "teacher") {
-        window.location.replace("/teacher/dashboard");
+      // 1. Ambil data role dan pastikan tidak ada whitespace
+      const role = res.data.role?.trim().toLowerCase(); 
+  
+      console.log("Login sukses, role yang didapat:", role);
+  
+      // 2. Gunakan pengecekan yang lebih fleksibel
+      if (role === "teacher") {
+        console.log("Mengarahkan ke Teacher Dashboard...");
+        router.push("/teacher/dashboard");
+      } else if (role === "student") {
+        console.log("Mengarahkan ke Student Dashboard...");
+        router.push("/student/dashboard");
+      } else {
+        console.warn("Role tidak dikenali oleh sistem navigasi:", role);
+        alert("Error: Role tidak dikenali (" + role + ")");
       }
   
     } catch (err) {
-      alert("Cek email/password");
+      console.error("Login Gagal:", err.response?.data);
+      alert(err.response?.data?.error || "Cek email/password");
     }
   };
 
