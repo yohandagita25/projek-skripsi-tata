@@ -28,7 +28,7 @@ export default function Dashboard() {
         const courses = await getCourses();
         setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
 
-        // 2. Fetch User Info
+        // 2. Fetch User Info menggunakan axios instance
         const userRes = await api.get("/auth/me");
         setUserName(userRes.data.name);
 
