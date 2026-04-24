@@ -4,27 +4,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/teacher/Navbar";
 import Sidebar from "@/components/teacher/Sidebar";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Import 'api' (huruf kecil) bukan cuma 'API'
+import { api } from "@/lib/api"; 
 
 export default function TeacherLayout({ children }) {
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(true);
-  const [loading, setLoading] = useState(true); // ⬅️ penting
+  const [loading, setLoading] = useState(true);
 
   // 🔒 CHECK AUTH (pakai cookie)
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // ✅ Menggunakan axios (api) yang sudah kita buat
-        // withCredentials sudah otomatis ikut dari config lib/api.js
+        // ✅ Sekarang 'api' sudah dikenali karena sudah di-import di atas
         const res = await api.get("/auth/me");
   
-        // Jika sukses (status 200), matikan loading agar dashboard muncul
+        // Jika sukses, matikan loading
         setLoading(false);
       } catch (err) {
-        // ✅ Jika error (401 tidak login, dsb), lempar ke halaman login
         console.error("Auth check failed:", err);
+        // Jika tidak ada session, lempar balik ke login
         router.replace("/login"); 
       }
     };
@@ -32,7 +32,7 @@ export default function TeacherLayout({ children }) {
     checkAuth();
   }, [router]);
 
-  // 💾 Sidebar state (localStorage)
+  // 💾 Sidebar state (localStorage) - Tetap Sama
   useEffect(() => {
     const saved = localStorage.getItem("sidebar");
     if (saved !== null) {
@@ -44,18 +44,18 @@ export default function TeacherLayout({ children }) {
     localStorage.setItem("sidebar", JSON.stringify(isOpen));
   }, [isOpen]);
 
-  // ⏳ Loading screen (biar tidak flicker)
+  // ⏳ Loading screen - Tetap Sama
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-950 text-white">
-        Loading...
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mr-3"></div>
+        Checking Authorization...
       </div>
     );
   }
 
   return (
     <div className="flex bg-slate-950 min-h-screen">
-
       {/* Sidebar */}
       <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
 
@@ -69,7 +69,6 @@ export default function TeacherLayout({ children }) {
           {children}
         </main>
       </div>
-
     </div>
   );
 }
