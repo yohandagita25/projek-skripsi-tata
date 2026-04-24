@@ -18,12 +18,12 @@ export default function LoginPage() {
       // Simpan role ke localStorage sebagai cadangan jika cookie bermasalah
       localStorage.setItem("userRole", res.data.role);
   
-      if (res.data.role === "student") {
-        // ✅ Gunakan ini agar Next.js tidak melakukan caching pada rute dashboard
-        window.location.href = "/student/dashboard";
-      } else {
-        window.location.href = "/teacher/dashboard";
-      }
+      // Ganti bagian if success di handleLogin Bapak
+    if (res.data.role === "student") {
+      console.log("Mencoba tembus ke dashboard...");
+      // Gunakan timestamp (?t=...) agar browser menganggap ini link baru & tidak pakai cache
+      window.location.replace(`/student/dashboard?t=${Date.now()}`);
+    }
     } catch (err) {
       console.error("Login Gagal:", err.response?.data);
       alert("Gagal: " + (err.response?.data?.error || "Cek Koneksi"));

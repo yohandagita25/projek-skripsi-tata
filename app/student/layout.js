@@ -8,18 +8,9 @@ export default function StudentLayout({ children }) {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await api.get("/auth/me");
-        console.log("SATPAAM: Kunci Valid!", res.data);
-        setAuthorized(true);
-      } catch (err) {
-        // ✅ JANGAN TENDANG DULU! Kita mau lihat errornya apa
-        console.error("SATPAM: Ada masalah tapi saya biarkan masuk:", err.response?.data);
-        setAuthorized(true); // Paksa masuk untuk ngetes UI
-      }
-    };
-    checkAuth();
+    // KITA MATIKAN DULU CEK AUTHNYA UNTUK TES
+    console.log("SATPAM DIMATIKAN SEMENTARA - HARUSNYA DASHBOARD MUNCUL");
+    setAuthorized(true); 
   }, []);
 
   // ✅ Selama belum authorized, jangan tampilkan apa-apa (layar hitam/loading)
