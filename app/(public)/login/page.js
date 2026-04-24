@@ -8,25 +8,25 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+
   const handleLogin = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault(); // ✅ Mencegah refresh halaman otomatis oleh form
+    
     try {
       const res = await api.post("/auth/login", { email, password });
       
-      console.log("Login sukses, mencoba pindah...");
+      // Simpan role ke localStorage sebagai cadangan jika cookie bermasalah
+      localStorage.setItem("userRole", res.data.role);
   
       if (res.data.role === "student") {
-        // ✅ JANGAN PAKAI router.push
-        // ✅ PAKAI window.location.assign agar browser benar-benar pindah dunia
-        window.location.assign("/student/dashboard");
-      } else if (res.data.role === "teacher") {
-        window.location.assign("/teacher/dashboard");
+        // ✅ Gunakan ini agar Next.js tidak melakukan caching pada rute dashboard
+        window.location.href = "/student/dashboard";
+      } else {
+        window.location.href = "/teacher/dashboard";
       }
-  
     } catch (err) {
-      console.error("Login Gagal:", err);
-      alert("Cek kembali email dan password");
+      console.error("Login Gagal:", err.response?.data);
+      alert("Gagal: " + (err.response?.data?.error || "Cek Koneksi"));
     }
   };
 

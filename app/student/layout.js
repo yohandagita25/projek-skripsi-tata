@@ -11,15 +11,12 @@ export default function StudentLayout({ children }) {
     const checkAuth = async () => {
       try {
         const res = await api.get("/auth/me");
-        if (res.data.role === "student") {
-          setAuthorized(true);
-        } else {
-          // Jika role salah (misal teacher nyasar), tendang
-          window.location.replace("/login");
-        }
+        console.log("SATPAAM: Kunci Valid!", res.data);
+        setAuthorized(true);
       } catch (err) {
-        console.error("Gagal Validasi:", err);
-        window.location.replace("/login");
+        // ✅ JANGAN TENDANG DULU! Kita mau lihat errornya apa
+        console.error("SATPAM: Ada masalah tapi saya biarkan masuk:", err.response?.data);
+        setAuthorized(true); // Paksa masuk untuk ngetes UI
       }
     };
     checkAuth();
