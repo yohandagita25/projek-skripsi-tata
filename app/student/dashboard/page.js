@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getCourses } from "@/app/services/courseService";
-// ✅ Memastikan menggunakan api (huruf kecil) agar koneksi ke Vercel/Localhost otomatis
 import { api } from "@/lib/api"; 
 
 // IMPORT LIBRARY & CSS CUSTOM
