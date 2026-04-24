@@ -5,13 +5,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
-import { API } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
   useEffect(() => {
     const checkAuth = async () => {
-      const res = await fetch(`${API}/auth/me`, {
+      const res = await fetch(`${api}/auth/me`, {
         credentials: "include"
       });
       if (!res.ok) {
