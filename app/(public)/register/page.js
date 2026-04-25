@@ -1,5 +1,5 @@
 "use client";
-import { api } from "@/lib/api";
+import { API } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -39,7 +39,7 @@ const handleSubmit = async (e) => {
 
   try {
     // GANTI fetch lama dengan axios (api) yang sudah kita buat
-    const res = await api.post("/auth/register", form);
+    const res = await API.post("/auth/register", form);
 
     // Axios otomatis mengubah ke JSON, jadi kita ambil dari res.data
     setMessage("Register berhasil! Redirecting...");
