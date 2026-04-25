@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api"; 
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -9,13 +11,23 @@ export default function Navbar() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await fetch("http://localhost:5000/api/auth/logout", {
-      method: "POST",
-      credentials: "include"
-    });
-  
-    router.push("/");
-  
+    try {
+      // ✅ PERBAIKAN: Gunakan api.post (Otomatis menembak URL online & kirim cookie)
+      await api.post("/auth/logout");
+      
+      // ✅ Bersihkan sisa-sisa localStorage jika ada
+      localStorage.clear();
+
+      // Pindah ke halaman awal setelah logout
+      router.push("/");
+      
+      // ✅ Paksa reload sedikit agar state benar-benar bersih
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout gagal:", error);
+      // Tetap tendang ke halaman awal jika terjadi error sistem
+      router.push("/");
+    }
   };
 
   useEffect(() => {
@@ -46,22 +58,22 @@ export default function Navbar() {
           onClick={() => setOpen(!open)}
         >
           <img
-            src="https://i.pravatar.cc/40"
+            src="https://i.pravatar.cc/4"
             className="w-8 h-8 rounded-full"
+            alt="Avatar"
           />
-          <span className="text-sm font-medium">Student</span>
+          <span className="text-sm font-medium text-slate-200">Student</span>
         </div>
 
         {/* Dropdown */}
         {open && (
-          <div className="absolute right-0 top-12 w-40 bg-white border rounded-lg shadow-md">
-
-            <button className="block w-full text-left px-4 py-2 hover:bg-gray-100">
+          <div className="absolute right-0 top-12 w-40 bg-white border rounded-lg shadow-md overflow-hidden">
+            <button className="block w-full text-left px-4 py-2 text-slate-700 hover:bg-gray-100 transition-colors">
               Profile
             </button>
             <button
               onClick={handleLogout}
-              className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
+              className="block w-full text-left px-4 py-2 text-red-500 font-semibold hover:bg-red-50 transition-colors"
             >
               Logout
             </button>

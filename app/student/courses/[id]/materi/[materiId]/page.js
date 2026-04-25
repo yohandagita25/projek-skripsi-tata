@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; 
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil)
+import { api } from "@/lib/api";
 import { getFullCourses } from "@/app/services/courseService";
 
 // INTEGRASI EDITOR & FLOWCHART
@@ -63,8 +64,9 @@ export default function MateriPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const accessRes = await fetch(`${API}/student/course-access/${params.id}`, { credentials: "include" });
-        const accessStatus = await accessRes.json();
+        // ✅ PERBAIKAN: Gunakan api.get (Axios otomatis kirim cookie)
+        const accessRes = await api.get(`/student/course-access/${params.id}`);
+        const accessStatus = accessRes.data;
 
         if (accessStatus.posttestId) setPosttestId(accessStatus.posttestId);
         setIsPosttestDone(accessStatus.posttestDone || false);
@@ -101,8 +103,9 @@ export default function MateriPage() {
           setEdges([]);
 
           try {
-            const subRes = await fetch(`${API}/student/submission/${params.materiId}`, { credentials: "include" });
-            const subData = await subRes.json();
+            // ✅ PERBAIKAN: Gunakan api.get
+            const subRes = await api.get(`/student/submission/${params.materiId}`);
+            const subData = subRes.data;
 
             if (subData.exists) {
               const savedContent = typeof subData.data.content === 'string' 
@@ -118,7 +121,6 @@ export default function MateriPage() {
                 setTerminalOutput(savedContent.task?.output || "");
                 setRunCount(savedContent.run_count || 0);
               } else if (currentMateri.assignment?.type === 'flowchart') {
-                // SUNTIKKAN KEMBALI FUNGSI ONCHANGE AGAR DATA LAMA BISA DIEDIT
                 const restoredNodes = (savedContent.task?.nodes || []).map((node) => ({
                   ...node,
                   data: {
@@ -208,47 +210,41 @@ export default function MateriPage() {
     setRunCount(prev => prev + 1);
     setTerminalOutput("System: Compiling... ⏳");
     try {
-      const res = await fetch(`${API}/student/run-code`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ materi_id: materi.id, code: userCode }),
-        credentials: "include"
+      // ✅ PERBAIKAN: Gunakan api.post
+      const res = await api.post("/student/run-code", { 
+        materi_id: materi.id, 
+        code: userCode 
       });
-      const data = await res.json();
+      const data = res.data;
       setTerminalOutput(data.stderr ? `❌ Error:\n${data.stderr}` : `✅ Output:\n${data.stdout}`);
-    } catch (err) { setTerminalOutput("❌ Connection Error"); } finally { setIsCompiling(false); }
+    } catch (err) { 
+      setTerminalOutput("❌ Connection Error"); 
+    } finally { 
+      setIsCompiling(false); 
+    }
   };
 
   const handleSendAssignment = async () => {
-    // Validasi refleksi jika diaktifkan
     if (materi?.has_reflection && !userReflection.trim()) {
       return alert("Harap isi respon refleksi Anda!");
     }
     
-    // Memastikan data tugas membungkus kode DAN output terminal terakhir
     const taskContent = materi.assignment?.type === 'code' 
-      ? { 
-          code: userCode, 
-          output: terminalOutput // Simpan hasil run terakhir ke database
-        } 
+      ? { code: userCode, output: terminalOutput } 
       : { nodes, edges };
     
     try {
-      const res = await fetch(`${API}/student/submit-assignment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          materi_id: materi.id, 
-          content: { 
-            task: taskContent, 
-            reflection: userReflection, 
-            run_count: runCount 
-          } 
-        }),
-        credentials: "include"
+      // ✅ PERBAIKAN: Gunakan api.post
+      const res = await api.post("/student/submit-assignment", { 
+        materi_id: materi.id, 
+        content: { 
+          task: taskContent, 
+          reflection: userReflection, 
+          run_count: runCount 
+        } 
       });
   
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         setIsSubmitted(true);
         setCanGoNext(true);
         alert("🎉 Berhasil! Jawaban dan output terminal telah terkirim.");
@@ -355,7 +351,6 @@ export default function MateriPage() {
                   {materi.assignment.type === 'flowchart' ? (
                     <ReactFlowProvider>
                       <div className="flex flex-1 overflow-hidden">
-                        {/* SIDEBAR SEKARANG BERADA DI DALAM PROVIDER */}
                         <FlowchartSidebar />
                         <div className="flex-1 relative">
                           <ReactFlow

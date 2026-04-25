@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API } from "@/lib/api";
+import { api } from "@/lib/api";
 import { 
   Trophy, 
   CheckCircle2, 
@@ -17,7 +17,7 @@ export default function ChallengePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/student/challenges`, { credentials: "include" })
+    fetch(`${api}/student/challenges`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setChallenges(data);

@@ -6,7 +6,8 @@ import {
   Loader2, Send, ArrowRight, CheckCircle2, 
   ClipboardCheck, ChevronRight, ChevronLeft, Award 
 } from "lucide-react";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
+import { api } from "@/lib/api";
 
 export default function TestPage() {
   const params = useParams();
@@ -28,19 +29,13 @@ export default function TestPage() {
 
   useEffect(() => {
     const fetchTestData = async () => {
-      // Pastikan loading aktif saat mulai fetch ulang
       setLoading(true); 
       try {
-        const res = await fetch(`${API}/student/test-data/${params.testId}`, { 
-          credentials: "include" 
-        });
-        
-        if (!res.ok) throw new Error("Gagal mengambil data dari server");
-        
-        const data = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get
+        const res = await api.get(`/student/test-data/${params.testId}`);
+        const data = res.data; // Axios menggunakan .data
         setQuestions(data);
   
-        // Sinkronisasi dengan LocalStorage (Progress Siswa)
         const savedProgress = localStorage.getItem(STORAGE_KEY);
         if (savedProgress) {
           const parsedProgress = JSON.parse(savedProgress);
@@ -54,7 +49,7 @@ export default function TestPage() {
       }
     };
     if (params.testId) fetchTestData();
-  }, [params.testId]);
+  }, [params.testId, STORAGE_KEY]);
 
   const handleSelectOption = (qId, label) => {
     if (isFinished) return;
@@ -64,40 +59,29 @@ export default function TestPage() {
   };
 
   const handleSubmit = async () => {
-    // 1. Hitung jumlah jawaban yang sudah diisi
     const answeredCount = Object.keys(answers).length;
     const totalQuestions = questions.length;
 
-    // 2. LOGIKA VALIDASI: Cek apakah semua soal sudah terjawab
     if (answeredCount < totalQuestions) {
-      // Cari index soal pertama yang belum ada di state answers
       const firstEmptyIndex = questions.findIndex(q => !answers[q.id]);
-      
       alert(`Maaf, Anda belum menyelesaikan semua soal. (${answeredCount}/${totalQuestions} terjawab). Silakan lengkapi jawaban Anda.`);
-      
-      // Otomatis arahkan siswa ke soal yang kosong tersebut
       if (firstEmptyIndex !== -1) {
         setCurrentIndex(firstEmptyIndex);
       }
-      return; // BERHENTI DI SINI, tidak lanjut ke proses kirim (fetch)
+      return; 
     }
 
-    // 3. Jika sudah lengkap, baru lanjut proses pengiriman
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API}/student/submit-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          test_id: params.testId,
-          course_id: params.courseId,
-          test_type: params.type,
-          answers: answers
-        }),
-        credentials: "include"
+      // ✅ PERBAIKAN: Gunakan api.post
+      const res = await api.post("/student/submit-test", {
+        test_id: params.testId,
+        course_id: params.courseId,
+        test_type: params.type,
+        answers: answers
       });
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         setIsFinished(true);
         localStorage.removeItem(STORAGE_KEY); 
       } else {
@@ -117,8 +101,9 @@ export default function TestPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API}/courses-full`, { credentials: "include" });
-      const allData = await res.json();
+      // ✅ PERBAIKAN: Gunakan api.get
+      const res = await api.get("/courses-full");
+      const allData = res.data;
       const currentCourse = allData.find(c => c.id === Number(params.courseId));
       const firstMateriId = currentCourse?.modules?.[0]?.materi?.[0]?.id;
 
@@ -165,10 +150,10 @@ export default function TestPage() {
                   onClick={() => setCurrentIndex(idx)}
                   className={`w-9 h-9 shrink-0 rounded-xl text-[11px] font-black transition-all border ${
                     currentIndex === idx 
-                      ? `${themeColor} border-white/20 text-white shadow-lg` // Sedang dibuka
+                      ? `${themeColor} border-white/20 text-white shadow-lg` 
                       : answers[questions[idx].id] 
-                        ? "bg-green-500/20 border-green-500/50 text-green-500" // SUDAH DIISI (Hijau)
-                        : "bg-slate-800 border-slate-700 text-slate-500" // BELUM DIISI (Abu-abu)
+                        ? "bg-green-500/20 border-green-500/50 text-green-500" 
+                        : "bg-slate-800 border-slate-700 text-slate-500" 
                   }`}
                 >
                   {idx + 1}
@@ -191,7 +176,6 @@ export default function TestPage() {
                   </div>
                   <div className="flex-1">
                     
-                    {/* AREA TEKS SOAL */}
                     <div className="mb-10 flex flex-col gap-2">
                       {(() => {
                         const lines = (currentQ.question_text || "").split("\n").filter(l => l.trim() !== "");
@@ -213,7 +197,6 @@ export default function TestPage() {
 
                     {currentQ.question_image && (
                       <div className="mb-6 flex justify-center">
-                        {/* Container utama yang membatasi area gambar */}
                         <div className="overflow-hidden">
                           <img 
                             src={currentQ.question_image} 
@@ -224,7 +207,6 @@ export default function TestPage() {
                       </div>
                     )}
 
-                    {/* AREA PILIHAN JAWABAN */}
                     <div className="grid grid-cols-1 gap-5">
                       {currentQ.options.map((opt, idx) => {
                         const label = opt.option_label || opt.label;
@@ -257,11 +239,10 @@ export default function TestPage() {
                               </span>
                             </div>
 
-                            {/* TAMPILAN GAMBAR OPSI (Jika ada) */}
                             {image && (
                               <div className="mt-5 ml-22 rounded-2xl overflow-hidden border-2 border-slate-800 bg-slate-950 shadow-lg inline-block self-start">
                                 <img 
-                                  src={image.startsWith('http') ? image : `${API.replace('/api', '')}/uploads/${image}`} 
+                                  src={image.startsWith('http') ? image : `https://projek-skripsi-tata-backend.vercel.app/uploads/${image}`} 
                                   alt={`Opsi ${label}`} 
                                   className="max-h-48 w-40 object-contain"
                                   onError={(e) => { e.target.style.display = 'none'; }} 
@@ -282,7 +263,6 @@ export default function TestPage() {
             </div>
           )}
 
-          {/* NAVIGASI SOAL */}
           <div className="mt-8 flex justify-between items-center bg-slate-900/50 p-6 rounded-[32px] border border-slate-800/50 backdrop-blur-sm">
             <button 
               disabled={currentIndex === 0}
@@ -312,25 +292,18 @@ export default function TestPage() {
         </main>
       </div>
 
-      {/* MODAL BERHASIL (M MISSION ACCOMPLISHED) */}
       {isFinished && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-lg flex items-center justify-center p-8 animate-in fade-in duration-300">
           <div className="relative text-center bg-slate-900 border border-slate-800/80 p-14 rounded-[56px] shadow-[0_0_100px_rgba(0,0,0,0.9)] max-w-lg w-full overflow-hidden group animate-in zoom-in-95 duration-500">
-
-            {/* 2. GLOW BACKGROUND (SOFT) */}
             <div className="absolute -top-20 -right-20 w-60 h-60 bg-green-500/10 blur-[100px] rounded-full"></div>
             <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-blue-500/10 blur-[100px] rounded-full"></div>
 
-            {/* 3. ICON (Pusat Denyut) */}
             <div className="relative z-10 inline-flex items-center justify-center mb-10">
-              <div className="absolute aspect-square w-20 bg-green-500 rounded-full animate-neon-ripple opacity-0"></div>
-              <div className="absolute aspect-square w-24 bg-green-500 rounded-full animate-neon-ripple opacity-0 animation-delay-900"></div>
               <div className="relative bg-gradient-to-b from-green-400 to-green-600 text-white p-7 rounded-full inline-flex items-center justify-center border-4 border-slate-900 shadow-[0_0_50px_rgba(34,197,94,0.3)] group-hover:scale-105 transition-transform duration-500">
                 <CheckCircle2 size={72} strokeWidth={3} />
               </div>
             </div>
 
-            {/* 4. TYPOGRAPHY (Adjusted Spacing) */}
             <h4 className="relative z-10 text-4xl font-black text-white uppercase italic tracking-tighter mb-5 drop-shadow-sm select-none">
               Success <span className="text-green-500">!</span>
             </h4>
@@ -341,7 +314,6 @@ export default function TestPage() {
                 : "Pre-test berhasil dikirim. Sekarang Anda bisa mengakses materi pembelajaran!"}
             </p>
 
-            {/* 5. BUTTON (HIJAU + PUTIH) */}
             <button
               onClick={handleFinish}
               className="relative z-10 w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center gap-4 transition-all duration-300 shadow-xl shadow-green-950/30 active:scale-95 group/btn"
@@ -351,11 +323,9 @@ export default function TestPage() {
                 <ArrowRight size={20} className="group-hover/btn:translate-x-2 transition-transform duration-300" strokeWidth={3} />
               </span>
             </button>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }

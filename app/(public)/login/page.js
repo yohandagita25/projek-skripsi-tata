@@ -1,5 +1,5 @@
 "use client";
-import { API } from "@/lib/api"; // Memanggil konfigurasi API yang sudah online
+import { api } from "@/lib/api";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,7 +13,7 @@ export default function LoginPage() {
     if (e) e.preventDefault(); // ✅ Mencegah refresh halaman otomatis oleh form
     
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await api.post("/auth/login", { email, password });
       
       // Simpan role ke localStorage sebagai cadangan jika cookie bermasalah
       localStorage.setItem("userRole", res.data.role);

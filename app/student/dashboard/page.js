@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getCourses } from "@/app/services/courseService";
-import { API } from "@/lib/api"; 
+import { api} from "@/lib/api"; 
 
 // IMPORT LIBRARY & CSS CUSTOM
 import Calendar from "react-calendar";
@@ -29,19 +29,19 @@ export default function Dashboard() {
         setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
 
         // 2. Fetch User Info menggunakan axios instance
-        const userRes = await API.get("/auth/me");
+        const userRes = await api.get("/auth/me");
         setUserName(userRes.data.name);
 
         // 3. Fetch Activity Calendar
-        const activityRes = await API.get("/student/activity-calendar");
+        const activityRes = await api.get("/student/activity-calendar");
         setActiveDays(activityRes.data);
 
         // 4. Fetch Study Duration
-        const durationRes = await API.get("/student/study-duration");
+        const durationRes = await api.get("/student/study-duration");
         setTotalStudyMinutes(durationRes.data.totalMinutes || 0);
 
         // 5. Fetch Streak
-        const streakRes = await API.get("/student/learning-streak");
+        const streakRes = await api.get("/student/learning-streak");
         setStreak(streakRes.data.currentStreak || 0);
 
       } catch (error) {

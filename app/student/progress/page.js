@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { API } from "@/lib/api";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api";
 import { 
   BookOpen, CheckCircle2, Clock, AlertCircle, 
   Trophy, Loader2, ChevronDown, Layout
@@ -13,13 +14,13 @@ export default function StudentProgressPage() {
   const [selectedCourseId, setSelectedCourseId] = useState("");
 
   useEffect(() => {
-    fetch(`${API}/student/overall-progress`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Data Progress Diterima:", data); // Debugging: Cek isi data di F12 Console
+    // ✅ PERBAIKAN: Gunakan api.get untuk backend online & kirim cookie
+    api.get("/student/overall-progress")
+      .then((res) => {
+        const data = res.data; // Axios menggunakan res.data
+        console.log("Data Progress Diterima:", data);
         setProgressData(data);
         
-        // Pastikan kita mengambil ID yang benar untuk inisialisasi
         if (data && data.length > 0) {
           const initialId = data[0].course_id || data[0].id;
           setSelectedCourseId(String(initialId)); 
@@ -32,7 +33,6 @@ export default function StudentProgressPage() {
       });
   }, []);
 
-  // Perbaikan logika find: Mendukung course_id maupun id
   const selectedCourse = progressData.find(c => 
     String(c.course_id || c.id) === String(selectedCourseId)
   );
@@ -135,7 +135,6 @@ export default function StudentProgressPage() {
   );
 }
 
-// Komponen Pendukung Tetap Sama...
 function TestBadge({ label, data, color }) {
   const hasScore = data?.score !== null && data?.score !== undefined;
   return (

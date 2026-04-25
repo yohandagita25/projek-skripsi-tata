@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
+import { api } from "@/lib/api";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -19,11 +20,11 @@ export default function TestReviewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mengambil data dari API Review yang kita buat di Controller
-    fetch(`${API}/student/test-review/${params.id}`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        setReviewData(data);
+    // ✅ PERBAIKAN: Gunakan api.get agar otomatis membawa cookie login online
+    api.get(`/student/test-review/${params.id}`)
+      .then((res) => {
+        // Axios meletakkan data di properti .data
+        setReviewData(res.data);
         setLoading(false);
       })
       .catch((err) => {

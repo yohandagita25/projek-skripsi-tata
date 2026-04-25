@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, BookOpen, AlertCircle } from "lucide-react";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api"; 
 
 export default function CourseRedirect() {
   const router = useRouter();
@@ -12,9 +14,9 @@ export default function CourseRedirect() {
   useEffect(() => {
     const goToFirstMateri = async () => {
       try {
-        // Menggunakan API Full Course agar struktur data terpantau jelas
-        const res = await fetch(`http://localhost:5000/api/courses/courses-full`);
-        const allCourses = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get agar menembak backend online & kirim cookie
+        const res = await api.get("/courses/courses-full");
+        const allCourses = res.data; // Axios menggunakan .data
         
         // Cari course yang spesifik dari list
         const currentCourse = allCourses.find(c => c.id === parseInt(params.id));

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Search, User, ArrowRight, LayoutGrid, BookOpen } from "lucide-react";
 import Link from "next/link";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api"; 
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -12,8 +14,11 @@ export default function CoursesPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/courses");
-        const data = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get agar menembak backend online & kirim cookie
+        const res = await api.get("/courses");
+        
+        // Axios menyimpan data di res.data
+        const data = res.data;
         setCourses(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch courses:", error);
@@ -34,7 +39,6 @@ export default function CoursesPage() {
         <div className="mt-3 mb-3">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>              
-              {/* Ukuran Teks saya sesuaikan agar proporsional dengan Sidebar */}
               <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase">
                 Course Tersedia
               </h1>
