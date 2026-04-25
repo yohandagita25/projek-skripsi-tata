@@ -8,13 +8,11 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
-  defs,
-  linearGradient,
-  stop
+  CartesianGrid
 } from "recharts";
 import { BookOpen, Users, Layout, Loader2, ChevronDown, LayoutDashboard } from "lucide-react";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
+import { api } from "@/lib/api";
 
 export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
@@ -33,24 +31,20 @@ export default function TeacherDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Ambil Stats Utama & Daftar Kursus
-        const res = await fetch(`${API}/teacher/dashboard-stats`, { credentials: "include" });
-        const data = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get (Otomatis bawa cookie & URL Railway)
+        const res = await api.get("/teacher/dashboard-stats");
+        const data = res.data; // Axios meletakkan hasil di .data
 
-        if (res.ok) {
-          setStats({
-            courses: data.totalCourses || 0,
-            students: data.totalStudents || 0,
-            modules: data.totalModules || 0,
-          });
-          
-          // Simpan daftar kursus untuk dropdown
-          setCourses(data.courseList || []);
-          
-          // Set kursus pertama sebagai default jika ada
-          if (data.courseList && data.courseList.length > 0) {
-            setSelectedCourse(data.courseList[0].id);
-          }
+        setStats({
+          courses: data.totalCourses || 0,
+          students: data.totalStudents || 0,
+          modules: data.totalModules || 0,
+        });
+        
+        setCourses(data.courseList || []);
+        
+        if (data.courseList && data.courseList.length > 0) {
+          setSelectedCourse(data.courseList[0].id);
         }
       } catch (err) {
         console.error("Gagal mengambil data dashboard:", err);
@@ -62,20 +56,15 @@ export default function TeacherDashboard() {
     fetchDashboardData();
   }, []);
 
-  // 2. useEffect untuk ambil data grafik setiap kali dropdown berubah
   useEffect(() => {
     if (!selectedCourse) return;
 
     const fetchChartData = async () => {
       setChartLoading(true);
       try {
-        const res = await fetch(`${API}/teacher/course-progress/${selectedCourse}`, { 
-          credentials: "include" 
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setChartData(data || []);
-        }
+        // ✅ PERBAIKAN: Gunakan api.get
+        const res = await api.get(`/teacher/course-progress/${selectedCourse}`);
+        setChartData(res.data || []);
       } catch (err) {
         console.error("Gagal mengambil data grafik:", err);
       } finally {

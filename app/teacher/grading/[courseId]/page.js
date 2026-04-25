@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { 
   ChevronLeft, 
   ClipboardList, 
@@ -23,10 +24,11 @@ export default function SubBabGrading() {
   useEffect(() => {
     const fetchSubBab = async () => {
       try {
-        const res = await fetch(`${API}/teacher/grading/course/${params.courseId}`, { 
-          credentials: "include" 
-        });
-        const data = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie online)
+        const res = await api.get(`/teacher/grading/course/${params.courseId}`);
+        
+        // Axios meletakkan hasil data di properti .data
+        const data = res.data;
         setModules(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Gagal load sub-bab:", err);

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Plus, Trash2, ChevronRight } from "lucide-react";
-import { API } from "@/lib/api";
+// ✅ IMPORT instance api (huruf kecil)
+import { api } from "@/lib/api";
 
 export default function StepModule({ courseId, setStep, modules, setModules }) {  
   const [moduleName, setModuleName] = useState("");
@@ -28,50 +29,32 @@ export default function StepModule({ courseId, setStep, modules, setModules }) {
     
     setIsLoading(true);
     const savedModules = [];
-    // Kita ambil token dari cookie (asumsi nama cookie adalah 'token')
-    const getCookie = (name) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    };
-    const token = getCookie("token");
 
     try {
-      // Kita gunakan loop biasa untuk memastikan urutan
+      // ✅ Gunakan loop untuk menyimpan modul satu per satu ke database
       for (let i = 0; i < modules.length; i++) {
         const mod = modules[i];
         
-        // Alamat API disesuaikan dengan teacherRoutes.js Anda
-        const res = await fetch(`${API}/teacher/modules`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            title: mod.title,
-            course_id: courseId,
-            module_order: i + 1 // Urutan otomatis berdasarkan index
-          }),
-          credentials: "include"
+        // ✅ PERBAIKAN: Gunakan api.post (Otomatis kirim cookie & tembak URL online)
+        // Tidak perlu lagi manual ambil token atau set Authorization header
+        const res = await api.post("/teacher/modules", {
+          title: mod.title,
+          course_id: courseId,
+          module_order: i + 1 
         });
       
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Gagal simpan modul");
-        }
-        
-        const data = await res.json();
-        // Pastikan kita menyimpan data dari DB ke array sementara
-        savedModules.push(data); 
+        // Axios meletakkan data di properti .data
+        savedModules.push(res.data); 
       }
 
       // SETELAH SEMUA BERHASIL:
-      setModules(savedModules); // Ganti semua modules dengan data asli dari DB
-      setStep(3); // Baru pindah step
+      setModules(savedModules); // Update dengan data asli dari DB (yang sudah punya ID asli)
+      setStep(3); 
     } catch (error) {
       console.error("Error Detail:", error);
-      alert(error.message);
+      // Tangani pesan error dari response backend jika ada
+      const errorMessage = error.response?.data?.error || "Gagal simpan modul";
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -93,13 +76,12 @@ export default function StepModule({ courseId, setStep, modules, setModules }) {
           className="flex-1 bg-slate-800 border border-slate-700 p-4 rounded-xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
         />
         <button onClick={addModule} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2">
-          <Plus size={20} /> Tambah
+          <Plus size={20} /> Tamb <span className="hidden md:inline">bah</span>
         </button>
       </div>
 
       <div className="flex flex-col gap-4">
         {modules.map((m, index) => (
-          // SOLUSI KEY: Gunakan id DB jika ada, jika tidak pakai tempId, jika tidak pakai index
           <div 
             key={m.id || m.tempId || `mod-${index}`} 
             className="flex items-center justify-between bg-slate-800/30 p-5 rounded-2xl border border-slate-700"

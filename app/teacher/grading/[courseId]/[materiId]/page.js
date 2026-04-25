@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { 
   ChevronLeft, Send, Loader2, User, 
   Terminal, FileCode, CheckCircle, MessageSquare,
@@ -33,11 +34,9 @@ export default function StudentSubmissionsPage() {
 
   const fetchSubmissions = async () => {
     try {
-      const res = await fetch(`${API}/teacher/grading/materi/${params.materiId}`, { 
-        credentials: "include" 
-      });
-      const data = await res.json();
-      setSubmissions(data);
+      // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie & URL online)
+      const res = await api.get(`/teacher/grading/materi/${params.materiId}`);
+      setSubmissions(res.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -49,13 +48,9 @@ export default function StudentSubmissionsPage() {
     if (!score) return alert("Berikan nilai terlebih dahulu!");
     setSubmittingId(subId);
     try {
-      const res = await fetch(`${API}/teacher/grading/submit/${subId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score, feedback }),
-        credentials: "include"
-      });
-      if (res.ok) {
+      // ✅ PERBAIKAN: Gunakan api.put
+      const res = await api.put(`/teacher/grading/submit/${subId}`, { score, feedback });
+      if (res.status === 200 || res.status === 201) {
         fetchSubmissions();
       }
     } catch (err) {
@@ -65,7 +60,7 @@ export default function StudentSubmissionsPage() {
     }
   };
 
-  // Helper untuk memproses data konten (Coding atau Flowchart/Gambar)
+  // Helper untuk memproses data konten (Coding atau Flowchart/Gambar) - UI TETAP
   const renderStudentWork = (content) => {
     if (!content) return <p className="text-slate-500 italic text-xs">Tidak ada jawaban.</p>;
 
@@ -196,7 +191,6 @@ export default function StudentSubmissionsPage() {
                       <div className="w-1.5 h-6 bg-blue-600 rounded-full animate-pulse"></div>
                       <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Hasil Pekerjaan Siswa</p>
                     </div>
-                    {/* Menggunakan sub.content secara konsisten sesuai parameter .map() */}
                     {renderStudentWork(sub.content)}
                   </div>
                 </div>

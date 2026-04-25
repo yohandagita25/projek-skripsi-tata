@@ -6,8 +6,8 @@ import {
   FileText, Save, Plus, Trash2, Code, 
   BrainCircuit, MessageSquareQuote 
 } from "lucide-react";
-import { API } from "@/lib/api";
-// Memastikan komponen ini diimport dari path yang benar
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
+import { api } from "@/lib/api";
 import MarkdownEditor from "@/components/teacher/MarkdownEditor";
 
 export default function StepMateri({ modules, initialMateri = null }) {
@@ -113,44 +113,29 @@ export default function StepMateri({ modules, initialMateri = null }) {
 
           let resMateri;
           if (item.isNew || !item.id) {
-            resMateri = await fetch(`${API}/teacher/materi`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(materiPayload),
-              credentials: "include"
-            });
+            // ✅ PERBAIKAN: Gunakan api.post (Otomatis bawa cookie & URL Railway)
+            resMateri = await api.post("/teacher/materi", materiPayload);
           } else {
-            resMateri = await fetch(`${API}/teacher/materi/${item.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(materiPayload),
-              credentials: "include"
-            });
+            // ✅ PERBAIKAN: Gunakan api.put
+            resMateri = await api.put(`/teacher/materi/${item.id}`, materiPayload);
           }
 
-          if (!resMateri.ok) throw new Error("Gagal simpan materi");
-          const savedData = await resMateri.json();
+          // Axios meletakkan hasil di .data
+          const savedData = resMateri.data;
           const materiId = item.id || savedData.id || savedData.data?.id;
 
           // Upsert Assignment jika diaktifkan
           if (item.has_assignment) {
-            await fetch(`${API}/teacher/assignments/upsert`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                materi_id: materiId,
-                instruction: item.assignment_instruction,
-                type: item.assignment_type,
-                starter_code: item.starter_code || ""
-              }),
-              credentials: "include"
+            // ✅ PERBAIKAN: Gunakan api.post
+            await api.post("/teacher/assignments/upsert", {
+              materi_id: materiId,
+              instruction: item.assignment_instruction,
+              type: item.assignment_type,
+              starter_code: item.starter_code || ""
             });
           } else if (!item.isNew && item.id) {
-            // Hapus assignment jika guru menonaktifkan fitur tugas pada materi lama
-            await fetch(`${API}/teacher/assignments/${materiId}`, {
-              method: "DELETE",
-              credentials: "include"
-            });
+            // ✅ PERBAIKAN: Gunakan api.delete
+            await api.delete(`/teacher/assignments/${materiId}`);
           }
         }
       }
@@ -160,7 +145,8 @@ export default function StepMateri({ modules, initialMateri = null }) {
       window.location.href = "/teacher/courses";
     } catch (err) {
       console.error("Submit Error:", err);
-      alert("Terjadi kesalahan: " + err.message);
+      const msg = err.response?.data?.error || err.message;
+      alert("Terjadi kesalahan: " + msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -224,7 +210,7 @@ export default function StepMateri({ modules, initialMateri = null }) {
                       </div>
                     )}
 
-                    {/* INTEGRASI MARKDOWN EDITOR (PENGGANTI TEXTAREA LAMA) */}
+                    {/* INTEGRASI MARKDOWN EDITOR */}
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
                         Isi Materi Pembelajaran <span className="text-blue-500 font-medium normal-case tracking-normal italic">(Markdown Editor)</span>
@@ -289,7 +275,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
         ))}
       </div>
 
-      {/* TOMBOL PUBLISH DI BAWAH */}
       <div className="mt-16 flex justify-end">
         <button onClick={handleSubmit} disabled={isSubmitting} className="bg-green-600 hover:bg-green-500 text-white font-black px-16 py-6 rounded-[28px] shadow-2xl shadow-green-950/40 flex gap-4 disabled:opacity-50 transition-all active:scale-95 uppercase text-sm tracking-[0.3em] items-center">
           {isSubmitting ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save size={24} />} 

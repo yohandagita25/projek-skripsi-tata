@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api"; 
 
 export default function StepCourse({ setStep, setCourseId }) {
   // State form tetap sama
@@ -24,20 +26,11 @@ export default function StepCourse({ setStep, setCourseId }) {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("http://localhost:5000/api/teacher/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-        // TAMBAHKAN INI agar cookie token terkirim otomatis ke backend
-        credentials: "include", 
-      });
+      // ✅ PERBAIKAN: Gunakan api.post (Otomatis tembak online & kirim cookie)
+      const res = await api.post("/teacher/courses", form);
 
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Sesi habis, silakan login ulang.");
-        throw new Error("Gagal menyimpan course");
-      }
-
-      const data = await res.json();
+      // Axios secara default meletakkan data respon di properti .data
+      const data = res.data;
 
       // Pastikan backend mengembalikan ID course yang baru dibuat
       if (data.id) {
@@ -48,7 +41,9 @@ export default function StepCourse({ setStep, setCourseId }) {
       }
     } catch (error) {
       console.error("Error:", error.message);
-      alert(error.message || "Terjadi kesalahan saat menyimpan data.");
+      // Tangani pesan error dari Axios
+      const errorMessage = error.response?.data?.error || error.message || "Terjadi kesalahan saat menyimpan data.";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

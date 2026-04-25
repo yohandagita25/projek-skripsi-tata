@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { ChevronLeft, Search, Loader2, Trophy, User, Download } from "lucide-react";
 
 export default function DetailedTestResults() {
@@ -15,22 +16,26 @@ export default function DetailedTestResults() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // Memanggil rute dinamis /api/teacher/results/:testType/:courseId
-        const res = await fetch(`${API}/teacher/results/${params.testType}/${params.courseId}`, { 
-          credentials: "include" 
-        });
-        const data = await res.json();
-        setResults(data);
+        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie & baseURL Railway)
+        const res = await api.get(`/teacher/results/${params.testType}/${params.courseId}`);
+        
+        // Axios meletakkan data di properti .data
+        setResults(res.data || []);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching results:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchResults();
+
+    if (params.testType && params.courseId) {
+      fetchResults();
+    }
   }, [params.testType, params.courseId]);
 
-  const filtered = results.filter(r => r.student_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = results.filter(r => 
+    r.student_name?.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (loading) return (
     <div className="h-screen bg-slate-950 flex items-center justify-center">
@@ -58,7 +63,7 @@ export default function DetailedTestResults() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
           <input 
             type="text" placeholder="Cari Siswa..." 
-            className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white"
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>

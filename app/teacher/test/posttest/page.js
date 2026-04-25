@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { createTest, uploadDocx } from "@/app/services/testService";
 import { getAvailableCourses } from "@/app/services/courseService";
+// ✅ IMPORT instance api (huruf kecil) dari lib
 import { api } from "@/lib/api"; 
 
 export default function PosttestPage() {
@@ -22,9 +23,9 @@ export default function PosttestPage() {
   useEffect(() => {
     const fetchCoursesData = async () => {
       try {
-        // Mengambil course untuk posttest
+        // Mengambil course untuk posttest melalui service
         const data = await getAvailableCourses("posttest");
-        setAvailableCourses(data);
+        setAvailableCourses(data || []);
       } catch (error) {
         console.error("Gagal mengambil daftar course:", error);
       }
@@ -45,13 +46,19 @@ export default function PosttestPage() {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      const res = await api.post("/tests/upload-image", formData);
+      // ✅ PERBAIKAN: Gunakan api.post (Otomatis membawa cookie & baseURL online)
+      const res = await api.post("/tests/upload-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       const imageUrl = res.data.url;
       const updatedQuestions = [...questions];
       if (type === "question") updatedQuestions[qIndex].question_image = imageUrl;
       else updatedQuestions[qIndex].options[optIndex].option_image = imageUrl;
       setQuestions(updatedQuestions);
-    } catch (err) { alert("Gagal mengunggah gambar."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal mengunggah gambar."); 
+    }
   };
 
   const handleUpload = async () => {
@@ -60,10 +67,14 @@ export default function PosttestPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      // ✅ Pastikan di dalam testService.uploadDocx juga menggunakan 'api' (kecil)
       const res = await uploadDocx(formData);
       setQuestions(res.data.questions);
       alert("✅ Dokumen berhasil dianalisis!");
-    } catch (err) { alert("Gagal menganalisis file."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal menganalisis file."); 
+    }
     finally { setIsLoading(false); }
   };
 
@@ -71,11 +82,14 @@ export default function PosttestPage() {
     if (!courseId || !title || questions.length === 0) return alert("Lengkapi data!");
     setIsSaving(true);
     try {
-      // Menyimpan dengan type: "posttest"
+      // ✅ Pastikan di dalam testService.createTest juga menggunakan 'api' (kecil)
       await createTest({ course_id: courseId, type: "posttest", title, duration: 30, questions });
       alert("🎉 Post-test Berhasil Tersimpan!");
       setQuestions([]); setTitle(""); setFile(null); setCourseId("");
-    } catch (err) { alert("Gagal menyimpan."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal menyimpan."); 
+    }
     finally { setIsSaving(false); }
   };
 
@@ -133,7 +147,7 @@ export default function PosttestPage() {
                 <option value="">Pilih Mata Pelajaran...</option>
                 {availableCourses?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
-              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold transition-all" placeholder="Judul Post-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold transition-all text-white" placeholder="Judul Post-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
               <label htmlFor="posttestUpload" className="w-full flex flex-col items-center justify-center gap-4 bg-slate-950 border-2 border-dashed border-slate-800 p-10 rounded-[32px] cursor-pointer hover:border-blue-500 hover:bg-blue-600/5 transition-all">
                   <Upload className="text-slate-500" />
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">{file ? file.name : "Upload File Word"}</span>

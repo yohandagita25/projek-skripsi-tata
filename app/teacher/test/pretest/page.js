@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { createTest, uploadDocx } from "@/app/services/testService";
 import { getAvailableCourses } from "@/app/services/courseService";
+// ✅ IMPORT instance api (huruf kecil) dari lib
 import { api } from "@/lib/api"; 
 
 export default function PretestPage() {
@@ -22,8 +23,9 @@ export default function PretestPage() {
   useEffect(() => {
     const fetchCoursesData = async () => {
       try {
+        // ✅ Pastikan di dalam courseService juga sudah menggunakan 'api' (kecil)
         const data = await getAvailableCourses("pretest");
-        setAvailableCourses(data);
+        setAvailableCourses(data || []);
       } catch (error) {
         console.error("Gagal mengambil daftar course:", error);
       }
@@ -44,13 +46,19 @@ export default function PretestPage() {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      const res = await api.post("/tests/upload-image", formData);
+      // ✅ PERBAIKAN: Gunakan api.post (Otomatis membawa cookie & baseURL online)
+      const res = await api.post("/tests/upload-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
       const imageUrl = res.data.url;
       const updatedQuestions = [...questions];
       if (type === "question") updatedQuestions[qIndex].question_image = imageUrl;
       else updatedQuestions[qIndex].options[optIndex].option_image = imageUrl;
       setQuestions(updatedQuestions);
-    } catch (err) { alert("Gagal mengunggah gambar."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal mengunggah gambar."); 
+    }
   };
 
   const handleUpload = async () => {
@@ -59,10 +67,14 @@ export default function PretestPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      // ✅ Pastikan di dalam testService.uploadDocx juga menggunakan 'api' (kecil)
       const res = await uploadDocx(formData);
       setQuestions(res.data.questions);
       alert("✅ Dokumen berhasil dianalisis!");
-    } catch (err) { alert("Gagal menganalisis file."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal menganalisis file."); 
+    }
     finally { setIsLoading(false); }
   };
 
@@ -70,13 +82,18 @@ export default function PretestPage() {
     if (!courseId || !title || questions.length === 0) return alert("Lengkapi data!");
     setIsSaving(true);
     try {
+      // ✅ Pastikan di dalam testService.createTest juga menggunakan 'api' (kecil)
       await createTest({ course_id: courseId, type: "pretest", title, duration: 30, questions });
       alert("🎉 Tersimpan!");
       setQuestions([]); setTitle(""); setFile(null); setCourseId("");
-    } catch (err) { alert("Gagal menyimpan."); }
+    } catch (err) { 
+      console.error(err);
+      alert("Gagal menyimpan."); 
+    }
     finally { setIsSaving(false); }
   };
 
+  // --- UI TETAP SAMA 100% ---
   return (
     <div className="flex flex-col gap-8 p-2 min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
       
@@ -131,7 +148,7 @@ export default function PretestPage() {
                 <option value="">Pilih Mata Pelajaran...</option>
                 {availableCourses?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
-              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold transition-all" placeholder="Judul Pre-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold transition-all text-white" placeholder="Judul Pre-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
               <label htmlFor="pretestUpload" className="w-full flex flex-col items-center justify-center gap-4 bg-slate-950 border-2 border-dashed border-slate-800 p-10 rounded-[32px] cursor-pointer hover:border-blue-500 hover:bg-blue-600/5 transition-all">
                   <Upload className="text-slate-500" />
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">{file ? file.name : "Upload File Word"}</span>
@@ -157,29 +174,25 @@ export default function PretestPage() {
             </div>
           ) : (
             questions.map((q, i) => {
-              // Kita ambil setiap baris teks soal
               const lines = q.questionText.split("\n").filter(l => l.trim() !== "");
               
               return (
                 <div key={i} className="bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] relative hover:border-slate-700 transition-all mb-6">
                   
-                  {/* Nomor Soal Badge */}
                   <div className="flex justify-between items-center mb-8">
                     <span className="bg-blue-600 text-white text-[10px] font-black px-5 py-2 rounded-xl uppercase tracking-widest italic shadow-lg">
                        Soal #{i + 1}
                     </span>
                   </div>
 
-                  {/* AREA TEKS SOAL (Uniform Newline Style) */}
                   <div className="mb-10 flex flex-col gap-2">
                     {lines.map((line, idx) => (
                       <p 
                         key={idx} 
                         className={`text-lg leading-relaxed tracking-tight ${
-                          // Baris pertama dan baris terakhir dibuat Bold biru sesuai permintaan Bapak
                           idx === 0 || idx === lines.length - 1 
-                          ? "text-blue-300" 
-                          : "text-slate-200 font-medium ml-1" // Isi list agak masuk dikit biar rapi
+                          ? "text-blue-300 font-bold" 
+                          : "text-slate-200 font-medium ml-1"
                         }`}
                       >
                         {line}
@@ -198,7 +211,6 @@ export default function PretestPage() {
                     <input type="file" className="hidden" onChange={(e) => handleImageUpload(e, "question", i)} />
                   </label>
 
-                  {/* GRID OPSI JAWABAN */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {q.options.map((opt, j) => (
                       <div key={j} className={`p-6 rounded-[32px] border-2 flex flex-col gap-4 transition-all ${opt.label === q.answer ? "bg-green-500/5 border-green-500/30 shadow-inner" : "bg-slate-950 border-slate-900"}`}>

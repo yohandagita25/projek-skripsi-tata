@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/teacher/Navbar";
 import Sidebar from "@/components/teacher/Sidebar";
-// ✅ PERBAIKAN: Import 'api' (huruf kecil) bukan cuma 'API'
+// ✅ Import api (huruf kecil) dari folder lib yang sudah kita perbaiki
 import { api } from "@/lib/api"; 
 
 export default function TeacherLayout({ children }) {
@@ -13,18 +13,26 @@ export default function TeacherLayout({ children }) {
   const [isOpen, setIsOpen] = useState(true);
   const [loading, setLoading] = useState(true);
 
-  // 🔒 CHECK AUTH (pakai cookie)
+  // 🔒 CHECK AUTH (Menggunakan Axios Instance yang Baru)
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // ✅ Sekarang 'api' sudah dikenali karena sudah di-import di atas
+        // ✅ Menggunakan api.get (Otomatis membawa cookie online)
         const res = await api.get("/auth/me");
-  
-        // Jika sukses, matikan loading
+        
+        // 🛡️ PROTEKSI TAMBAHAN: Pastikan yang masuk adalah teacher
+        // Jika backend Bapak mengirim data user, kita cek role-nya
+        if (res.data.role !== "teacher") {
+          console.warn("Akses ditolak: Anda bukan Teacher");
+          router.replace("/login");
+          return;
+        }
+
+        // Jika sukses dan role sesuai, matikan loading
         setLoading(false);
       } catch (err) {
-        console.error("Auth check failed:", err);
-        // Jika tidak ada session, lempar balik ke login
+        console.error("Auth check failed atau Session habis:", err);
+        // Jika token tidak valid atau expired, lempar balik ke login
         router.replace("/login"); 
       }
     };
@@ -49,11 +57,12 @@ export default function TeacherLayout({ children }) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-950 text-white">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mr-3"></div>
-        Checking Authorization...
+        <p className="font-black uppercase tracking-widest text-xs">Checking Authorization...</p>
       </div>
     );
   }
 
+  // ✅ UI TETAP SAMA 100%
   return (
     <div className="flex bg-slate-950 min-h-screen">
       {/* Sidebar */}

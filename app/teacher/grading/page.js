@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { Star, BookOpen, ChevronRight, Loader2, GraduationCap } from "lucide-react";
 
 export default function GradingDashboard() {
@@ -12,8 +13,12 @@ export default function GradingDashboard() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch(`${API}/teacher/dashboard-stats`, { credentials: "include" });
-        const data = await res.json();
+        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie online)
+        const res = await api.get("/teacher/dashboard-stats");
+        
+        // Axios meletakkan hasil data di properti .data
+        const data = res.data;
+        
         // Menggunakan courseList yang sudah Anda buat di controller
         setCourses(data.courseList || []);
       } catch (err) {

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
 import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
-import { API } from "@/lib/api";
+// ✅ IMPORT instance api (huruf kecil)
+import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
 
 export default function CoursePage() {
@@ -43,14 +44,12 @@ export default function CoursePage() {
     setEditData({ ...data }); 
     
     if (type === "materi") {
-      // Sinkronisasi Tugas Utama
       const task = data.assignment;
       setHasAssignment(!!task);
       setAssignmentType(task?.type || "flowchart");
       setAssignmentInstruction(task?.instruction || "");
       setStarterCode(task?.starter_code || "");
 
-      // Sinkronisasi Fitur Respon/Refleksi
       setHasReflection(data.has_reflection || false);
       setReflectionQuestion(data.reflection_question || "");
     }
@@ -70,7 +69,6 @@ export default function CoursePage() {
         };
         await updateModule(editData.id, payload);
       } else if (editType === "materi") {
-        // 1. Update Materi Utama (Termasuk has_reflection)
         const payload = { 
           ...editData, 
           order_number: parseInt(editData.order_number) || 0,
@@ -79,24 +77,16 @@ export default function CoursePage() {
         };
         await updateMateri(editData.id, payload);
 
-        // 2. Update/Upsert Tugas (Flowchart atau Code)
+        // ✅ PERBAIKAN: Gunakan api.post & api.delete (Axios otomatis bawa cookie)
         if (hasAssignment) {
-          await fetch(`${API}/teacher/assignments/upsert`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              materi_id: editData.id,
-              instruction: assignmentInstruction,
-              type: assignmentType,
-              starter_code: assignmentType === "code" ? starterCode : ""
-            }),
-            credentials: "include"
+          await api.post("/teacher/assignments/upsert", {
+            materi_id: editData.id,
+            instruction: assignmentInstruction,
+            type: assignmentType,
+            starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          await fetch(`${API}/teacher/assignments/${editData.id}`, {
-            method: "DELETE",
-            credentials: "include"
-          });
+          await api.delete(`/teacher/assignments/${editData.id}`);
         }
       }
       
@@ -117,12 +107,9 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        const endpoint = `${API}/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
-        const res = await fetch(endpoint, { 
-          method: "DELETE", 
-          credentials: "include" 
-        });
-        if (!res.ok) throw new Error("Gagal menghapus data");
+        // ✅ PERBAIKAN: Gunakan api.delete
+        const endpoint = `/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
+        await api.delete(endpoint);
       }
 
       alert(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} berhasil dihapus!`);
@@ -132,6 +119,7 @@ export default function CoursePage() {
     }
   };
 
+  // --- UI TETAP SAMA ---
   return (
     <div className="flex flex-col gap-6 p-2 min-h-screen bg-slate-950 text-white relative font-sans">
       
@@ -176,7 +164,6 @@ export default function CoursePage() {
                   <input className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-sm" placeholder="URL YouTube (jika ada)" value={editData.video_url || ""} onChange={(e) => setEditData({...editData, video_url: e.target.value})} />
                   <textarea className="w-full bg-slate-800 p-4 rounded-xl border border-slate-700 text-sm h-32 resize-none" placeholder="Isi materi..." value={editData.content || ""} onChange={(e) => setEditData({...editData, content: e.target.value})} />
 
-                  {/* 🌟 AREA FITUR RESPON (PURPLE) */}
                   <div className={`p-4 rounded-2xl border transition-all ${hasReflection ? "bg-purple-600/10 border-purple-500/50" : "bg-slate-900 border-slate-800"}`}>
                     <div className="flex items-center gap-3 mb-3">
                       <input type="checkbox" id="modal-reflect" checked={hasReflection} onChange={(e) => setHasReflection(e.target.checked)} className="w-4 h-4 accent-purple-600 cursor-pointer" />
@@ -190,7 +177,6 @@ export default function CoursePage() {
                     )}
                   </div>
 
-                  {/* 🌟 AREA TUGAS (BLUE) */}
                   <div className={`p-4 rounded-2xl border transition-all ${hasAssignment ? "bg-blue-600/10 border-blue-500/50" : "bg-slate-900 border-slate-800"}`}>
                     <div className="flex items-center justify-between mb-4">
                       <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest pl-1">Tugas Praktek</label>

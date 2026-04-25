@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+// ✅ IMPORT instance api (Axios)
+import { api } from "@/lib/api"; 
 
 export default function ModulesPage() {
   const { courseId } = useParams();
@@ -11,11 +13,14 @@ export default function ModulesPage() {
   const [order, setOrder] = useState("");
 
   const fetchModules = async () => {
-    const res = await fetch(
-      `http://localhost:5000/api/teacher/modules/${courseId}`
-    );
-    const data = await res.json();
-    setModules(data);
+    try {
+      // ✅ PERBAIKAN: Gunakan api.get agar menembak online & kirim cookie
+      const res = await api.get(`/teacher/modules/${courseId}`);
+      // Axios otomatis melakukan JSON.parse, data ada di res.data
+      setModules(res.data);
+    } catch (err) {
+      console.error("Gagal mengambil modul:", err);
+    }
   };
 
   useEffect(() => {
@@ -23,31 +28,36 @@ export default function ModulesPage() {
   }, [courseId]);
 
   const createModule = async () => {
-    await fetch("http://localhost:5000/api/teacher/modules", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      // ✅ PERBAIKAN: Gunakan api.post
+      await api.post("/teacher/modules", {
         course_id: Number(courseId),
         title,
         module_order: Number(order),
-      }),
-    });
+      });
 
-    setTitle("");
-    setOrder("");
-    fetchModules();
+      setTitle("");
+      setOrder("");
+      fetchModules();
+    } catch (err) {
+      console.error("Gagal membuat modul:", err);
+      alert("Gagal menambahkan modul.");
+    }
   };
 
   const deleteModule = async (id) => {
-    await fetch(`http://localhost:5000/api/teacher/modules/${id}`, {
-      method: "DELETE",
-    });
-
-    fetchModules();
+    if (!confirm("Hapus modul ini?")) return;
+    try {
+      // ✅ PERBAIKAN: Gunakan api.delete
+      await api.delete(`/teacher/modules/${id}`);
+      fetchModules();
+    } catch (err) {
+      console.error("Gagal menghapus modul:", err);
+      alert("Gagal menghapus modul.");
+    }
   };
 
+  // --- UI TETAP SAMA 100% ---
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">
@@ -60,19 +70,19 @@ export default function ModulesPage() {
           placeholder="Module title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="bg-slate-800 px-3 py-2 rounded-lg"
+          className="bg-slate-800 px-3 py-2 rounded-lg text-white outline-none focus:ring-1 focus:ring-blue-500"
         />
 
         <input
           placeholder="Order"
           value={order}
           onChange={(e) => setOrder(e.target.value)}
-          className="bg-slate-800 px-3 py-2 rounded-lg w-24"
+          className="bg-slate-800 px-3 py-2 rounded-lg w-24 text-white outline-none focus:ring-1 focus:ring-blue-500"
         />
 
         <button
           onClick={createModule}
-          className="bg-blue-600 px-4 rounded-lg"
+          className="bg-blue-600 hover:bg-blue-700 px-4 rounded-lg text-white font-bold transition-colors"
         >
           Add
         </button>
@@ -83,15 +93,15 @@ export default function ModulesPage() {
         {modules.map((m) => (
           <div
             key={m.id}
-            className="bg-slate-900 p-4 rounded-lg flex justify-between"
+            className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex justify-between items-center"
           >
-            <span>
+            <span className="text-slate-200">
               {m.module_order}. {m.title}
             </span>
 
             <button
               onClick={() => deleteModule(m.id)}
-              className="text-red-400"
+              className="text-red-400 hover:text-red-300 font-medium transition-colors"
             >
               Delete
             </button>

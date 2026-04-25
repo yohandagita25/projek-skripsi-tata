@@ -1,6 +1,6 @@
-"use client"; // Wajib ada di baris pertama
+"use client";
 
-import { useState } from "react"; // Tambahkan baris ini
+import { useState } from "react";
 import StepCourse from "./components/StepCourse";
 import StepModule from "./components/StepModule";
 import StepMateri from "./components/StepMateri";
@@ -25,7 +25,12 @@ export default function CreateCoursePage() {
 
         {/* Step 2: Modul */}
         <div className={step !== 2 ? 'hidden' : 'block'}>
-          <StepModule courseId={courseId} setStep={setStep} modules={modules} setModules={setModules} />
+          <StepModule 
+            courseId={courseId} 
+            setStep={setStep} 
+            modules={modules} 
+            setModules={setModules} 
+          />
         </div>
 
         {/* Step 3: Materi */}

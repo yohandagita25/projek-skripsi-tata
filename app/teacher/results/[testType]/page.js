@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { BookOpen, ChevronRight, Loader2, ClipboardCheck, Award } from "lucide-react";
 
 export default function SelectCourseResults() {
@@ -14,10 +15,16 @@ export default function SelectCourseResults() {
   const isPretest = params.testType === "pretest";
 
   useEffect(() => {
-    fetch(`${API}/teacher/dashboard-stats`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
+    // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie online)
+    api.get("/teacher/dashboard-stats")
+      .then((res) => {
+        // Axios meletakkan hasil data di properti .data
+        const data = res.data;
         setCourses(data.courseList || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Gagal mengambil daftar kursus:", err);
         setLoading(false);
       });
   }, []);

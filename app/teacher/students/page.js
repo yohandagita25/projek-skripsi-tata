@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { API } from "@/lib/api";
+// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+import { api } from "@/lib/api";
 import { Users, BookOpen, Loader2 } from "lucide-react";
 
 export default function StudentMonitor() {
@@ -13,21 +14,19 @@ export default function StudentMonitor() {
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API}/teacher/students-monitor`, { 
-          credentials: "include" 
-        });
+        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie & baseURL online)
+        const res = await api.get("/teacher/students-monitor");
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Gagal mengambil data dari server");
-        }
+        // Axios meletakkan hasil data di properti .data
+        const data = res.data;
 
         // Memastikan data yang di-set adalah array
         setStudents(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Fetch Error:", err.message);
-        setError(err.message);
+        // Tangani pesan error dari Axios
+        const errorMessage = err.response?.data?.error || err.message || "Gagal mengambil data dari server";
+        setError(errorMessage);
         setStudents([]);
       } finally {
         setLoading(false);
@@ -37,7 +36,7 @@ export default function StudentMonitor() {
     fetchStudents();
   }, []);
 
-  // TAMPILAN LOADING (CYBERPUNK STYLE)
+  // TAMPILAN LOADING (CYBERPUNK STYLE - UI TETAP)
   if (loading) {
     return (
       <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
@@ -63,7 +62,7 @@ export default function StudentMonitor() {
         </div>
       )}
 
-      {/* TABEL MONITORING */}
+      {/* TABEL MONITORING (UI TETAP) */}
       <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] overflow-hidden shadow-2xl">
         <table className="w-full text-left border-collapse">
           <thead>
