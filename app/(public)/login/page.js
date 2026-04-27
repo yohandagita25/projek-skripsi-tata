@@ -13,41 +13,38 @@ export default function LoginPage() {
     if (e) e.preventDefault();
     
     try {
-      console.log("Mengirim data login ke server...");
       const res = await api.post("/auth/login", { email, password });
       
-      console.log("Respon Server:", res.data);
-      
+      // Simpan role untuk cadangan pengecekan sisi klien
       localStorage.setItem("userRole", res.data.role);
   
       if (res.data.role === "student") {
-        console.log("Login sukses, instruksi pindah halaman dijalankan...");
-        
-        // Pastikan menggunakan router.push dari 'next/navigation'
-        setTimeout(() => {
-            // Gunakan window.location.href jika router.push dirasa lambat
-            window.location.href = "/student/dashboard"; 
-        }, 2000);
+        // Menggunakan window.location.href agar halaman benar-benar dimuat ulang 
+        // dan middleware/layout bisa membaca cookie yang baru masuk.
+        window.location.href = "/student/dashboard"; 
+      } else if (res.data.role === "teacher") {
+        // Jika Bapak ada dashboard teacher nanti
+        window.location.href = "/teacher/dashboard";
       } else {
-        alert("Anda bukan siswa!");
+        alert("Role tidak dikenali!");
       }
     } catch (err) {
-      console.error("Login Gagal Detail:", err.response?.data || err.message);
-      alert("Gagal Login: " + (err.response?.data?.error || "Cek Koneksi"));
+      console.error("Login Error:", err.response?.data || err.message);
+      alert("Gagal Login: " + (err.response?.data?.error || "Cek Koneksi atau Akun"));
     }
   };
   
   return (
     <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
 
-      {/* Animated Background - Tetap Sama */}
+      {/* Animated Background */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-30 animate-pulse top-10 left-10"></div>
         <div className="absolute w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-30 animate-pulse bottom-10 right-10"></div>
         <div className="absolute w-96 h-96 bg-purple-600 rounded-full blur-3xl opacity-20 animate-pulse top-1/2 left-1/2"></div>
       </div>
 
-      {/* NAVBAR - Tetap Sama */}
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
         <Link href="/">
           <h1 className="text-xl font-bold text-blue-400 cursor-pointer">
@@ -56,7 +53,7 @@ export default function LoginPage() {
         </Link>
       </nav>
       
-      {/* LOGIN CARD - Tetap Sama */}
+      {/* LOGIN CARD */}
       <div className="flex items-center justify-center px-6 py-20">
         <div className="bg-slate-900/80 backdrop-blur-lg p-10 rounded-2xl shadow-xl w-full max-w-md border border-slate-800">
           <h2 className="text-3xl font-bold text-center mb-2">
