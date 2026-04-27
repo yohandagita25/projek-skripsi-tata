@@ -11,26 +11,16 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    
     try {
       const res = await api.post("/auth/login", { email, password });
+      console.log("1. Login Berhasil, Respon:", res.data);
       
-      // Simpan role untuk cadangan pengecekan sisi klien
-      localStorage.setItem("userRole", res.data.role);
-  
-      if (res.data.role === "student") {
-        // Menggunakan window.location.href agar halaman benar-benar dimuat ulang 
-        // dan middleware/layout bisa membaca cookie yang baru masuk.
-        window.location.href = "/student/dashboard"; 
-      } else if (res.data.role === "teacher") {
-        // Jika Bapak ada dashboard teacher nanti
-        window.location.href = "/teacher/dashboard";
-      } else {
-        alert("Role tidak dikenali!");
-      }
+      // KITA STOP DI SINI. Jangan pindah halaman dulu.
+      // Kita mau cek apakah setelah Login sukses, Cookie benar-benar nempel atau tidak.
+      alert("Login Sukses di sistem! Cek tab Application sekarang sebelum klik OK.");
+      
     } catch (err) {
-      console.error("Login Error:", err.response?.data || err.message);
-      alert("Gagal Login: " + (err.response?.data?.error || "Cek Koneksi atau Akun"));
+      console.error("Login Gagal:", err.response?.data || err.message);
     }
   };
   
