@@ -5,7 +5,7 @@ import { jwtVerify } from "jose";
 const secretString = process.env.JWT_SECRET || "rahasia_skripsi_tata_123";
 const secret = new TextEncoder().encode(secretString);
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
