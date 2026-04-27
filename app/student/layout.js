@@ -14,36 +14,55 @@ export default function StudentLayout({ children }) {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // 1. Cek dulu secara lokal, jangan langsung tembak API
+      const localToken = localStorage.getItem("token");
+      const localRole = localStorage.getItem("userRole");
+
+      if (!localToken || localRole !== "student") {
+        console.warn("Satpam: Data lokal tidak ditemukan.");
+        window.location.href = "/login";
+        return;
+      }
+
       try {
-        // Berikan waktu napas 500ms agar browser selesai menulis cookie ke memori
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const res = await api.get("/auth/me");
+        // 2. Verifikasi ke Backend Railway
+        // Jika api.js Bapak sudah pakai Interceptor Authorization: Bearer, ini akan lancar
+        const res = await api.get("/api/auth/me");
         
         if (res.data.role === "student") {
           setAuthorized(true);
         } else {
-          // Jika role salah, tendang
+          // Jika role di database ternyata bukan student, hapus data lokal dan tendang
+          localStorage.clear();
           window.location.href = "/login";
         }
       } catch (err) {
-        console.error("Satpam: Akses Ditolak.", err.response?.data || err.message);
+        console.error("Satpam: Gagal verifikasi ke server.", err.message);
         
-        // Hapus token yang mungkin sudah expired/invalid
-        localStorage.removeItem("token"); 
-        localStorage.removeItem("userRole");
-        
-        window.location.href = "/login";
+        // JANGAN LANGSUNG TENDANG JIKA SERVER HANYA LAGI LAMBAT (Timeout)
+        // Tendang hanya jika statusnya memang 401 (Unauthorized)
+        if (err.response?.status === 401) {
+          localStorage.clear();
+          window.location.href = "/login";
+        } else {
+          // Jika server down/error lain, kita izinkan masuk dulu berdasarkan token lokal
+          // agar user tidak stres terjebak loop login
+          setAuthorized(true); 
+        }
       }
     };
 
     checkAuth();
   }, []);
 
+  // UI Loading saat verifikasi
   if (!authorized) {
     return (
-      <div className="h-screen bg-slate-950 text-white flex items-center justify-center font-black uppercase tracking-widest">
-        MEMVERIFIKASI AKSES...
+      <div className="h-screen bg-slate-950 text-white flex flex-col items-center justify-center space-y-4">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="font-black uppercase tracking-widest animate-pulse text-blue-400">
+          MEMVERIFIKASI AKSES...
+        </div>
       </div>
     );
   }
