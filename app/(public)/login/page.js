@@ -21,13 +21,13 @@ export default function LoginPage() {
       localStorage.setItem("userRole", res.data.role);
   
       if (res.data.role === "student") {
-        console.log("Login Berhasil! Mengalihkan ke dashboard dalam 2 detik...");
+        console.log("Login sukses, instruksi pindah halaman dijalankan...");
         
-        // Kasih delay 2 detik agar Bapak sempat baca Console
+        // Pastikan menggunakan router.push dari 'next/navigation'
         setTimeout(() => {
-          router.push("/student/dashboard");
+            // Gunakan window.location.href jika router.push dirasa lambat
+            window.location.href = "/student/dashboard"; 
         }, 2000);
-        
       } else {
         alert("Anda bukan siswa!");
       }
