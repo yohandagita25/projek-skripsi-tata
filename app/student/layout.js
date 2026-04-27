@@ -27,11 +27,13 @@ export default function StudentLayout({ children }) {
           window.location.href = "/login";
         }
       } catch (err) {
-        console.error("Satpam Error:", err.response?.data || err.message);
-        // HANYA redirect jika error 401 (Unauthorized)
-        if (err.response?.status === 401) {
-          window.location.href = "/login";
-        }
+        console.error("Satpam: Akses Ditolak.", err.response?.data || err.message);
+        
+        // Hapus token yang mungkin sudah expired/invalid
+        localStorage.removeItem("token"); 
+        localStorage.removeItem("userRole");
+        
+        window.location.href = "/login";
       }
     };
 

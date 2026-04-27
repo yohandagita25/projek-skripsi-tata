@@ -9,16 +9,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     try {
       const res = await api.post("/auth/login", { email, password });
-      console.log("1. Login Berhasil, Respon:", res.data);
-      
-      // KITA STOP DI SINI. Jangan pindah halaman dulu.
-      // Kita mau cek apakah setelah Login sukses, Cookie benar-benar nempel atau tidak.
-      alert("Login Sukses di sistem! Cek tab Application sekarang sebelum klik OK.");
-      
+
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userRole", res.data.role);
+      }
+
+      if (res.data.role === "student") {
+        window.location.href = "/student/dashboard";
+      } else {
+        alert("Role tidak dikenali!");
+      }
     } catch (err) {
       console.error("Login Gagal:", err.response?.data || err.message);
     }
