@@ -12,46 +12,45 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // Pastikan di lib/api.js baseURL sudah benar tanpa double /api
       const res = await api.post("/api/auth/login", { email, password });
-  
-      // Jika status 200, berarti login berhasil di server
+
       if (res.status === 200) {
         const { token, role } = res.data;
-  
-        // 1. Simpan data ke storage
+
+        // 1. Simpan data ke storage secara aman
         localStorage.setItem("token", token);
         localStorage.setItem("userRole", role);
-  
-        // 2. Beri pesan sukses agar Bapak tahu ini berhasil sebelum pindah
-        alert("Login Berhasil! Mengalihkan ke Dashboard...");
-  
-        // 3. Logika Perpindahan Berdasarkan Role
+
+        // 2. Alert untuk verifikasi (Bapak bisa hapus nanti jika sudah lancar)
+        alert(`Login Berhasil sebagai ${role}! Mengalihkan...`);
+
+        // 3. Gunakan router.refresh() lalu push agar state aplikasi bersih
+        // Menggunakan rute folder Bapak: student dan teacher
         if (role === "student") {
-          window.location.replace("/student/dashboard"); // Gunakan replace agar tidak bisa 'back'
+          router.push("/student/dashboard");
         } else if (role === "teacher") {
-          window.location.replace("/teacher/dashboard");
+          router.push("/teacher/dashboard");
         } else {
-          alert("Role tidak dikenal: " + role);
+          alert("Role tidak dikenali: " + role);
         }
       }
     } catch (err) {
-      // Jika eror, tampilkan pesannya di alert supaya terbaca
       const errorMsg = err.response?.data?.error || err.message;
       alert("Gagal Login: " + errorMsg);
     }
   };
-  
+
   return (
     <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
-
-      {/* Animated Background */}
+      {/* Animated Background - UI TETAP SAMA */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-30 animate-pulse top-10 left-10"></div>
         <div className="absolute w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-30 animate-pulse bottom-10 right-10"></div>
         <div className="absolute w-96 h-96 bg-purple-600 rounded-full blur-3xl opacity-20 animate-pulse top-1/2 left-1/2"></div>
       </div>
 
-      {/* NAVBAR */}
+      {/* NAVBAR - UI TETAP SAMA */}
       <nav className="sticky top-0 z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
         <Link href="/">
           <h1 className="text-xl font-bold text-blue-400 cursor-pointer">
@@ -60,7 +59,7 @@ export default function LoginPage() {
         </Link>
       </nav>
       
-      {/* LOGIN CARD */}
+      {/* LOGIN CARD - UI TETAP SAMA */}
       <div className="flex items-center justify-center px-6 py-20">
         <div className="bg-slate-900/80 backdrop-blur-lg p-10 rounded-2xl shadow-xl w-full max-w-md border border-slate-800">
           <h2 className="text-3xl font-bold text-center mb-2">
