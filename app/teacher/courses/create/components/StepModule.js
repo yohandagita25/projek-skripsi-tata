@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Plus, Trash2, ChevronRight } from "lucide-react";
-// ✅ IMPORT instance api (huruf kecil)
 import { api } from "@/lib/api";
 
 export default function StepModule({ courseId, setStep, modules, setModules }) {  
@@ -31,28 +30,25 @@ export default function StepModule({ courseId, setStep, modules, setModules }) {
     const savedModules = [];
 
     try {
-      // ✅ Gunakan loop untuk menyimpan modul satu per satu ke database
       for (let i = 0; i < modules.length; i++) {
         const mod = modules[i];
         
-        // ✅ PERBAIKAN: Gunakan api.post (Otomatis kirim cookie & tembak URL online)
-        // Tidak perlu lagi manual ambil token atau set Authorization header
-        const res = await api.post("/teacher/modules", {
+        // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+        const res = await api.post("/api/teacher/modules", {
           title: mod.title,
           course_id: courseId,
           module_order: i + 1 
         });
       
-        // Axios meletakkan data di properti .data
-        savedModules.push(res.data); 
+        // Ambil data modul yang baru disimpan
+        const savedMod = res.data?.data || res.data;
+        savedModules.push(savedMod); 
       }
 
-      // SETELAH SEMUA BERHASIL:
-      setModules(savedModules); // Update dengan data asli dari DB (yang sudah punya ID asli)
+      setModules(savedModules); 
       setStep(3); 
     } catch (error) {
-      console.error("Error Detail:", error);
-      // Tangani pesan error dari response backend jika ada
+      console.error("Error StepModule:", error);
       const errorMessage = error.response?.data?.error || "Gagal simpan modul";
       alert(errorMessage);
     } finally {

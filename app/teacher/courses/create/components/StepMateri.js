@@ -6,7 +6,6 @@ import {
   FileText, Save, Plus, Trash2, Code, 
   BrainCircuit, MessageSquareQuote 
 } from "lucide-react";
-// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
 import { api } from "@/lib/api";
 import MarkdownEditor from "@/components/teacher/MarkdownEditor";
 
@@ -17,7 +16,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
   const lastItemRef = useRef(null);
   const [shouldScroll, setShouldScroll] = useState(false);
 
-  // Inisialisasi data dari props initialMateri
   useEffect(() => {
     if (initialMateri) {
       const newMap = {};
@@ -38,7 +36,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
     }
   }, [initialMateri]);
 
-  // Fungsi tambah baris materi baru
   const addNewMateriRow = (moduleId) => {
     const currentMateri = materiMap[moduleId] || [];
     setShouldScroll(true);
@@ -64,7 +61,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
     });
   };
 
-  // Auto-scroll ke item baru
   useEffect(() => {
     if (shouldScroll && lastItemRef.current) {
       lastItemRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -72,7 +68,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
     }
   }, [materiMap, shouldScroll]);
 
-  // Update state materi secara dinamis
   const handleMateriChange = (moduleId, tempId, field, value) => {
     setMateriMap((prevMap) => {
       const currentMateriList = prevMap[moduleId] || [];
@@ -83,15 +78,13 @@ export default function StepMateri({ modules, initialMateri = null }) {
     });
   };
 
-  // Hapus materi
   const removeMateriRow = (moduleId, tempId) => {
-    if(confirm("Hapus materi ini? Semua data yang belum disimpan akan hilang.")) {
+    if(confirm("Hapus materi ini?")) {
       const filtered = materiMap[moduleId].filter((m) => m.tempId !== tempId);
       setMateriMap({ ...materiMap, [moduleId]: filtered });
     }
   };
 
-  // Submit semua data ke backend
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -113,35 +106,30 @@ export default function StepMateri({ modules, initialMateri = null }) {
 
           let resMateri;
           if (item.isNew || !item.id) {
-            // ✅ PERBAIKAN: Gunakan api.post (Otomatis bawa cookie & URL Railway)
-            resMateri = await api.post("/teacher/materi", materiPayload);
+            // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+            resMateri = await api.post("/api/teacher/materi", materiPayload);
           } else {
-            // ✅ PERBAIKAN: Gunakan api.put
-            resMateri = await api.put(`/teacher/materi/${item.id}`, materiPayload);
+            resMateri = await api.put(`/api/teacher/materi/${item.id}`, materiPayload);
           }
 
-          // Axios meletakkan hasil di .data
-          const savedData = resMateri.data;
-          const materiId = item.id || savedData.id || savedData.data?.id;
+          const savedData = resMateri.data?.data || resMateri.data;
+          const materiId = item.id || savedData.id;
 
-          // Upsert Assignment jika diaktifkan
-          if (item.has_assignment) {
-            // ✅ PERBAIKAN: Gunakan api.post
-            await api.post("/teacher/assignments/upsert", {
+          if (item.has_assignment && materiId) {
+            // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+            await api.post("/api/teacher/assignments/upsert", {
               materi_id: materiId,
               instruction: item.assignment_instruction,
               type: item.assignment_type,
               starter_code: item.starter_code || ""
             });
           } else if (!item.isNew && item.id) {
-            // ✅ PERBAIKAN: Gunakan api.delete
-            await api.delete(`/teacher/assignments/${materiId}`);
+            await api.delete(`/api/teacher/assignments/${materiId}`);
           }
         }
       }
 
       alert("🎉 Materi & tugas berhasil disimpan!");
-      router.refresh();
       window.location.href = "/teacher/courses";
     } catch (err) {
       console.error("Submit Error:", err);
@@ -187,7 +175,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
                   </button>
 
                   <div className="flex flex-col gap-8">
-                    {/* INFO DASAR MATERI */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="md:col-span-2 space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Judul Materi</label>
@@ -202,7 +189,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
                       </div>
                     </div>
 
-                    {/* URL VIDEO (HANYA MUNCUL JIKA TIPE VIDEO) */}
                     {m.type === "video" && (
                       <div className="space-y-2 animate-in slide-in-from-top-2">
                         <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">YouTube URL</label>
@@ -210,7 +196,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
                       </div>
                     )}
 
-                    {/* INTEGRASI MARKDOWN EDITOR */}
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
                         Isi Materi Pembelajaran <span className="text-blue-500 font-medium normal-case tracking-normal italic">(Markdown Editor)</span>
@@ -221,10 +206,7 @@ export default function StepMateri({ modules, initialMateri = null }) {
                       />
                     </div>
 
-                    {/* FITUR INTERAKTIF (REFLEKSI & TUGAS) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-800/50">
-                      
-                      {/* FITUR RESPON/REFLEKSI */}
                       <div className={`p-6 rounded-[28px] border transition-all ${m.has_reflection ? "bg-purple-600/5 border-purple-500/40 shadow-inner" : "bg-slate-900/30 border-slate-800"}`}>
                         <div className="flex items-center gap-4 mb-4">
                           <input type="checkbox" id={`reflect-${m.tempId}`} checked={m.has_reflection} onChange={(e) => handleMateriChange(module.id, m.tempId, "has_reflection", e.target.checked)} className="w-6 h-6 accent-purple-500 cursor-pointer" />
@@ -238,7 +220,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
                         )}
                       </div>
 
-                      {/* FITUR TUGAS PRAKTEK */}
                       <div className={`p-6 rounded-[28px] border transition-all ${m.has_assignment ? "bg-blue-600/5 border-blue-500/40 shadow-inner" : "bg-slate-900/30 border-slate-800"}`}>
                          <div className="flex items-center justify-between mb-4">
                             <span className={`text-xs font-black uppercase tracking-widest ${m.has_assignment ? "text-blue-400" : "text-slate-500"}`}>Aktivitas Tugas</span>
@@ -265,7 +246,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
                             </div>
                          )}
                       </div>
-
                     </div>
                   </div>
                 </div>

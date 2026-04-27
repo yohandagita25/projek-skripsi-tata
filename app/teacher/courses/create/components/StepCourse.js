@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-// ✅ IMPORT instance api (Axios)
 import { api } from "@/lib/api"; 
 
 export default function StepCourse({ setStep, setCourseId }) {
-  // State form tetap sama
   const [form, setForm] = useState({
     title: "",
     instructor: "",
@@ -19,30 +17,28 @@ export default function StepCourse({ setStep, setCourseId }) {
   };
 
   const handleSubmit = async () => {
-    // Validasi sederhana agar tidak mengirim data kosong
     if (!form.title || !form.instructor) {
       return alert("Judul dan Pengajar wajib diisi!");
     }
 
     setIsSubmitting(true);
     try {
-      // ✅ PERBAIKAN: Gunakan api.post (Otomatis tembak online & kirim cookie)
-      const res = await api.post("/teacher/courses", form);
-
-      // Axios secara default meletakkan data respon di properti .data
+      // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+      const res = await api.post("/api/teacher/courses", form);
       const data = res.data;
 
-      // Pastikan backend mengembalikan ID course yang baru dibuat
-      if (data.id) {
-        setCourseId(data.id); 
-        setStep(2); // Lanjut ke Step 2 (Modul)
+      // Mendukung format data langsung atau data.id
+      const id = data.id || data.data?.id;
+
+      if (id) {
+        setCourseId(id); 
+        setStep(2);
       } else {
         throw new Error("Server tidak mengembalikan ID Course.");
       }
     } catch (error) {
-      console.error("Error:", error.message);
-      // Tangani pesan error dari Axios
-      const errorMessage = error.response?.data?.error || error.message || "Terjadi kesalahan saat menyimpan data.";
+      console.error("Error StepCourse:", error.message);
+      const errorMessage = error.response?.data?.error || error.message || "Gagal menyimpan course.";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -57,7 +53,6 @@ export default function StepCourse({ setStep, setCourseId }) {
       </div>
   
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Judul Course */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-slate-400 ml-1">Judul Course</label>
           <input
@@ -69,7 +64,6 @@ export default function StepCourse({ setStep, setCourseId }) {
           />
         </div>
   
-        {/* Nama Pengajar */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-slate-400 ml-1">Nama Pengajar</label>
           <input
@@ -81,7 +75,6 @@ export default function StepCourse({ setStep, setCourseId }) {
           />
         </div>
   
-        {/* URL Thumbnail */}
         <div className="md:col-span-2 flex flex-col gap-2">
           <label className="text-sm font-medium text-slate-400 ml-1">URL Gambar Thumbnail</label>
           <input
@@ -93,7 +86,6 @@ export default function StepCourse({ setStep, setCourseId }) {
           />
         </div>
   
-        {/* Deskripsi */}
         <div className="md:col-span-2 flex flex-col gap-2">
           <label className="text-sm font-medium text-slate-400 ml-1">Deskripsi Singkat</label>
           <textarea

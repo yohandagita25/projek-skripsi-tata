@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
 import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
-// ✅ IMPORT instance api (huruf kecil)
 import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
 
@@ -12,18 +11,15 @@ export default function CoursePage() {
   const [showCreate, setShowCreate] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState(null);
   
-  // STATE UNTUK EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editType, setEditType] = useState(""); // 'course', 'module', atau 'materi'
+  const [editType, setEditType] = useState(""); 
   const [editData, setEditData] = useState(null);
 
-  // STATE KHUSUS TUGAS (ASSIGNMENT)
   const [hasAssignment, setHasAssignment] = useState(false);
   const [assignmentType, setAssignmentType] = useState("flowchart");
   const [assignmentInstruction, setAssignmentInstruction] = useState("");
   const [starterCode, setStarterCode] = useState("");
 
-  // STATE KHUSUS REFLEKSI
   const [hasReflection, setHasReflection] = useState(false);
   const [reflectionQuestion, setReflectionQuestion] = useState("");
 
@@ -38,7 +34,6 @@ export default function CoursePage() {
 
   useEffect(() => { fetchCourses(); }, []);
 
-  // FUNGSI UNTUK MEMBUKA MODAL EDIT
   const openEditModal = (type, data) => {
     setEditType(type);
     setEditData({ ...data }); 
@@ -57,7 +52,6 @@ export default function CoursePage() {
     setIsModalOpen(true);
   };
 
-  // FUNGSI SIMPAN PERUBAHAN
   const handleSaveEdit = async () => {
     try {
       if (editType === "course") {
@@ -77,16 +71,16 @@ export default function CoursePage() {
         };
         await updateMateri(editData.id, payload);
 
-        // ✅ PERBAIKAN: Gunakan api.post & api.delete (Axios otomatis bawa cookie)
+        // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
         if (hasAssignment) {
-          await api.post("/teacher/assignments/upsert", {
+          await api.post("/api/teacher/assignments/upsert", {
             materi_id: editData.id,
             instruction: assignmentInstruction,
             type: assignmentType,
             starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          await api.delete(`/teacher/assignments/${editData.id}`);
+          await api.delete(`/api/teacher/assignments/${editData.id}`);
         }
       }
       
@@ -95,7 +89,7 @@ export default function CoursePage() {
       fetchCourses(); 
     } catch (error) {
       console.error("Save error:", error);
-      alert("Gagal menyimpan perubahan: " + error.message);
+      alert("Gagal menyimpan perubahan: " + (error.response?.data?.error || error.message));
     }
   };
 
@@ -107,23 +101,20 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        // ✅ PERBAIKAN: Gunakan api.delete
-        const endpoint = `/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
+        // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+        const endpoint = `/api/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
         await api.delete(endpoint);
       }
 
       alert(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} berhasil dihapus!`);
       fetchCourses(); 
     } catch (error) { 
-      alert("Error: " + error.message); 
+      alert("Error: " + (error.response?.data?.error || error.message)); 
     }
   };
 
-  // --- UI TETAP SAMA ---
   return (
     <div className="flex flex-col gap-6 p-2 min-h-screen bg-slate-950 text-white relative font-sans">
-      
-      {/* MODAL EDIT UNIVERSAL */}
       {isModalOpen && editData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
@@ -215,7 +206,6 @@ export default function CoursePage() {
         </div>
       )}
 
-      {/* --- LIST KONTEN UTAMA --- */}
       {showCreate ? (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <button onClick={() => setShowCreate(false)} className="flex items-center gap-2 text-slate-400 hover:text-blue-400 mb-6 transition-colors group">
