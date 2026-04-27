@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
 import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
+// ✅ Menggunakan instance api (Axios)
 import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
 
@@ -10,30 +11,39 @@ export default function CoursePage() {
   const [courses, setCourses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState(null);
+  const [loading, setLoading] = useState(true); // Tambahkan loading state untuk UX
   
+  // STATE UNTUK EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editType, setEditType] = useState(""); 
+  const [editType, setEditType] = useState(""); // 'course', 'module', atau 'materi'
   const [editData, setEditData] = useState(null);
 
+  // STATE KHUSUS TUGAS (ASSIGNMENT)
   const [hasAssignment, setHasAssignment] = useState(false);
   const [assignmentType, setAssignmentType] = useState("flowchart");
   const [assignmentInstruction, setAssignmentInstruction] = useState("");
   const [starterCode, setStarterCode] = useState("");
 
+  // STATE KHUSUS REFLEKSI
   const [hasReflection, setHasReflection] = useState(false);
   const [reflectionQuestion, setReflectionQuestion] = useState("");
 
   const fetchCourses = async () => {
     try {
+      setLoading(true);
       const data = await getFullCourses();
-      setCourses(data);
+      // Pastikan data yang di-set adalah array agar tidak error .map
+      setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => { fetchCourses(); }, []);
 
+  // FUNGSI UNTUK MEMBUKA MODAL EDIT
   const openEditModal = (type, data) => {
     setEditType(type);
     setEditData({ ...data }); 
@@ -52,6 +62,7 @@ export default function CoursePage() {
     setIsModalOpen(true);
   };
 
+  // FUNGSI SIMPAN PERUBAHAN
   const handleSaveEdit = async () => {
     try {
       if (editType === "course") {
@@ -71,7 +82,7 @@ export default function CoursePage() {
         };
         await updateMateri(editData.id, payload);
 
-        // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+        // ✅ PERBAIKAN: Gunakan rute API yang konsisten dengan prefix /api
         if (hasAssignment) {
           await api.post("/api/teacher/assignments/upsert", {
             materi_id: editData.id,
@@ -80,7 +91,10 @@ export default function CoursePage() {
             starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          await api.delete(`/api/teacher/assignments/${editData.id}`);
+          // Hanya hapus jika memang sebelumnya ada assignment
+          if (editData.assignment) {
+            await api.delete(`/api/teacher/assignments/${editData.id}`);
+          }
         }
       }
       
@@ -101,7 +115,7 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
+        // ✅ PERBAIKAN: Prefix /api/teacher/ sesuai backend Railway
         const endpoint = `/api/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
         await api.delete(endpoint);
       }
@@ -113,8 +127,11 @@ export default function CoursePage() {
     }
   };
 
+  // --- UI TETAP SAMA ---
   return (
     <div className="flex flex-col gap-6 p-2 min-h-screen bg-slate-950 text-white relative font-sans">
+      
+      {/* MODAL EDIT UNIVERSAL */}
       {isModalOpen && editData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
@@ -226,7 +243,9 @@ export default function CoursePage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {courses.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-20 text-slate-500 font-black uppercase tracking-widest italic animate-pulse">Syncing Database...</div>
+            ) : courses.length === 0 ? (
               <div className="text-center py-20 border-2 border-dashed border-slate-800 rounded-2xl text-slate-600 uppercase font-black text-xl opacity-20 italic">Belum Ada Course</div>
             ) : (
               courses.map((course) => (

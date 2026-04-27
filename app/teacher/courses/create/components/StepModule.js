@@ -72,7 +72,7 @@ export default function StepModule({ courseId, setStep, modules, setModules }) {
           className="flex-1 bg-slate-800 border border-slate-700 p-4 rounded-xl text-white outline-none focus:ring-2 focus:ring-blue-500 transition-all"
         />
         <button onClick={addModule} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2">
-          <Plus size={20} /> Tamb <span className="hidden md:inline">bah</span>
+          <Plus size={20} /> Tambah
         </button>
       </div>
 
