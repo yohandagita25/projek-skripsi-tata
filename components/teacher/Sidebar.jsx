@@ -10,18 +10,18 @@ import {
   Users,
   Menu,
   ChevronDown,
+  Star,
   GraduationCap,
-  ShieldCheck
 } from "lucide-react";
 
 export default function TeacherSidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
   
-  // State terpisah untuk setiap dropdown agar tidak bentrok
+  // State terpisah untuk setiap dropdown
   const [openTest, setOpenTest] = useState(false);
   const [openGrades, setOpenGrades] = useState(false);
 
-  // Otomatis buka dropdown berdasarkan pathname saat ini agar user tidak bingung
+  // ✅ PERBAIKAN LOGIKA: Otomatis buka dropdown berdasarkan pathname saat ini
   useEffect(() => {
     if (pathname.startsWith("/teacher/test")) {
       setOpenTest(true);
@@ -59,135 +59,116 @@ export default function TeacherSidebar({ isOpen, setIsOpen }) {
         { name: "Nilai Tugas", href: "/teacher/grading" },
       ]
     },
-    { name: "Students List", href: "/teacher/students", icon: Users },
+    { name: "Students", href: "/teacher/students", icon: Users },
   ];
 
   return (
     <aside
-      className={`h-screen bg-slate-950 text-white transition-all duration-500 z-50 border-r border-slate-900 flex flex-col fixed top-0 left-0
+      className={`h-screen bg-slate-900 border-r border-slate-800 p-4 fixed z-50
+      transition-all duration-300 ease-in-out
       ${isOpen ? "w-64" : "w-20"}`}
     >
-      {/* Header: Logo / Branding */}
-      <div className="h-20 flex items-center justify-between px-5 border-b border-slate-900/50">
+      {/* Header */}
+      <div className={`flex items-center mb-10 ${isOpen ? "justify-between" : "justify-center"}`}>
         {isOpen && (
-          <div className="flex items-center gap-3 animate-in fade-in duration-700">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <ShieldCheck size={20} className="text-white" />
-            </div>
-            <h1 className="text-sm font-bold tracking-tight">
-              ADMIN <span className="text-indigo-500">PANEL</span>
-            </h1>
-          </div>
+          <h2 className="text-xl font-bold text-blue-500 animate-in fade-in duration-500 uppercase tracking-tighter italic">
+            Teacher Panel
+          </h2>
         )}
 
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`text-slate-500 hover:text-white p-2.5 rounded-xl hover:bg-slate-900 transition-all ${!isOpen ? "mx-auto" : ""}`}
+          className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"
         >
-          <Menu size={22} />
+          <Menu size={24} />
         </button>
       </div>
 
       {/* Menu List */}
-      <nav className="flex-grow mt-8 px-3 overflow-y-auto no-scrollbar">
-        <ul className="space-y-2">
-          {menu.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <ul className="space-y-3">
+        {menu.map((item) => {
+          const Icon = item.icon;
+          // ✅ PERBAIKAN: Pengecekan Active State yang lebih akurat
+          const isActive = pathname === item.href || (item.subItems?.some(sub => pathname === sub.href));
 
-            if (item.isDropdown) {
-              return (
-                <li key={item.name} className="relative">
-                  <button
-                    onClick={() => {
-                      if (!isOpen) setIsOpen(true);
-                      item.setOpenState(!item.isOpenState);
-                    }}
-                    className={`group w-full flex items-center gap-4 p-3.5 rounded-2xl transition-all duration-300
-                    ${isActive && !item.isOpenState ? "bg-indigo-600/10 text-indigo-400" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200"}`}
-                  >
-                    <div className="min-w-[22px] flex justify-center group-hover:scale-110 transition-transform">
-                      <Icon size={22} />
-                    </div>
-                    {isOpen && (
-                      <div className="flex items-center justify-between w-full animate-in slide-in-from-left-2 duration-300">
-                        <span className="font-semibold tracking-wide">{item.name}</span>
-                        <ChevronDown size={16} className={`transition-transform duration-300 ${item.isOpenState ? "rotate-180" : ""}`} />
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Submenu Items */}
-                  {item.isOpenState && isOpen && (
-                    <ul className="mt-2 ml-10 space-y-1 border-l border-slate-800 animate-in slide-in-from-top-2 duration-300">
-                      {item.subItems.map((sub) => {
-                        const isSubActive = pathname === sub.href;
-                        return (
-                          <li key={sub.href}>
-                            <Link
-                              href={sub.href}
-                              className={`block py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                                isSubActive ? "text-indigo-400 bg-indigo-400/5" : "text-slate-600 hover:text-slate-200"
-                              }`}
-                            >
-                              {sub.name}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                  
-                  {/* Tooltip saat Sidebar mengecil */}
-                  {!isOpen && (
-                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50 border border-slate-700 whitespace-nowrap shadow-2xl">
-                      {item.name}
-                    </div>
-                  )}
-                </li>
-              );
-            }
-
+          if (item.isDropdown) {
             return (
-              <li key={item.href} className="relative">
-                <Link
-                  href={item.href}
-                  className={`group flex items-center gap-4 p-3.5 rounded-2xl transition-all duration-300
-                  ${isActive ? "bg-indigo-600/10 text-indigo-400 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]" : "text-slate-500 hover:bg-slate-900 hover:text-slate-200"}`}
+              <li key={item.name} className="relative group">
+                <button
+                  onClick={() => {
+                    if (!isOpen) setIsOpen(true);
+                    item.setOpenState(!item.isOpenState);
+                  }}
+                  className={`w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200
+                  ${isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}
                 >
-                  <div className="min-w-[22px] flex justify-center group-hover:scale-110 transition-transform">
-                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <div className="min-w-[24px] flex justify-center">
+                    <Icon size={22} />
                   </div>
                   {isOpen && (
-                    <span className="font-semibold tracking-wide animate-in slide-in-from-left-2 duration-300">
-                      {item.name}
-                    </span>
-                  )}
-
-                  {!isOpen && (
-                    <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-50 whitespace-nowrap border border-slate-700 shadow-2xl">
-                      {item.name}
+                    <div className="flex items-center justify-between w-full animate-in slide-in-from-left-2 duration-300">
+                      <span className="font-medium text-sm">{item.name}</span>
+                      <ChevronDown size={16} className={`transition-transform duration-300 ${item.isOpenState ? "rotate-180" : ""}`} />
                     </div>
                   )}
-                </Link>
+                </button>
+
+                {/* Submenu Items */}
+                {item.isOpenState && isOpen && (
+                  <ul className="mt-2 ml-10 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                    {item.subItems.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      return (
+                        <li key={sub.href}>
+                          <Link
+                            href={sub.href}
+                            className={`block py-2 px-3 rounded-lg text-xs font-bold transition-all uppercase tracking-wider ${
+                              isSubActive ? "text-blue-400 bg-blue-400/5" : "text-slate-500 hover:text-white"
+                            }`}
+                          >
+                            {sub.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                
+                {!isOpen && (
+                  <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-md shadow-xl invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all z-[60] border border-slate-700 whitespace-nowrap">
+                    {item.name}
+                  </div>
+                )}
               </li>
             );
-          })}
-        </ul>
-      </nav>
+          }
 
-      {/* Footer Status */}
-      {isOpen && (
-        <div className="p-5 border-t border-slate-900/50">
-          <div className="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Teacher Mode</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-slate-300 font-medium">Secured Connection</span>
-            </div>
-          </div>
-        </div>
-      )}
+          return (
+            <li key={item.href} className="relative group">
+              <Link
+                href={item.href}
+                className={`flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200
+                ${isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}
+              >
+                <div className="min-w-[24px] flex justify-center">
+                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
+                {isOpen && (
+                  <span className="font-medium text-sm whitespace-nowrap animate-in slide-in-from-left-2 duration-300">
+                    {item.name}
+                  </span>
+                )}
+              </Link>
+
+              {!isOpen && (
+                <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-slate-800 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-md shadow-xl invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all z-[60] whitespace-nowrap border border-slate-700">
+                  {item.name}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </aside>
   );
 }
