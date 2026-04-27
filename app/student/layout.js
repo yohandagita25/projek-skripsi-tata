@@ -22,7 +22,7 @@ export default function StudentLayout({ children }) {
         if (res.data.role === "student") {
           setAuthorized(true);
         } else {
-          window.location.replace("/login");
+//          window.location.replace("/login");
         }
       } catch (err) {
         // JANGAN LANGSUNG REDIRECT, LIHAT ERRORNYA DULU DI CONSOLE
@@ -30,7 +30,7 @@ export default function StudentLayout({ children }) {
         
         // Hanya redirect jika memang benar-benar tidak ada token (401)
         if (err.response?.status === 401) {
-           window.location.replace("/login");
+//           window.location.replace("/login");
         }
       }
     };

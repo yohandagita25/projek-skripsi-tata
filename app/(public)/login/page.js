@@ -10,26 +10,33 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e) => {
-    if (e) e.preventDefault(); // ✅ Mencegah refresh halaman otomatis oleh form
+    if (e) e.preventDefault();
     
     try {
+      console.log("Mengirim data login ke server...");
       const res = await api.post("/auth/login", { email, password });
       
-      // Simpan role ke localStorage sebagai cadangan jika cookie bermasalah
+      console.log("Respon Server:", res.data);
+      
       localStorage.setItem("userRole", res.data.role);
   
-      // Ganti bagian if success di handleLogin Bapak
-    if (res.data.role === "student") {
-      console.log("Mencoba tembus ke dashboard...");
-      // Gunakan timestamp (?t=...) agar browser menganggap ini link baru & tidak pakai cache
-      window.location.replace(`/student/dashboard?t=${Date.now()}`);
-    }
+      if (res.data.role === "student") {
+        console.log("Login Berhasil! Mengalihkan ke dashboard dalam 2 detik...");
+        
+        // Kasih delay 2 detik agar Bapak sempat baca Console
+        setTimeout(() => {
+          router.push("/student/dashboard");
+        }, 2000);
+        
+      } else {
+        alert("Anda bukan siswa!");
+      }
     } catch (err) {
-      console.error("Login Gagal:", err.response?.data);
-      alert("Gagal: " + (err.response?.data?.error || "Cek Koneksi"));
+      console.error("Login Gagal Detail:", err.response?.data || err.message);
+      alert("Gagal Login: " + (err.response?.data?.error || "Cek Koneksi"));
     }
   };
-
+  
   return (
     <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
 
