@@ -89,19 +89,6 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           })}
         </ul>
       </nav>
-
-      {/* Footer Sidebar: Bisa Bapak tambahkan info versi atau bantuan di sini */}
-      {!collapsed && (
-        <div className="p-5 border-t border-slate-900/50">
-          <div className="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">System Status</p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-slate-300">Online & Encrypted</span>
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
