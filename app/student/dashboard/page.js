@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getCourses } from "@/app/services/courseService";
-import { api} from "@/lib/api"; 
+import { api } from "@/lib/api"; 
 
 // IMPORT LIBRARY & CSS CUSTOM
 import Calendar from "react-calendar";
@@ -24,32 +24,30 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // 1. Fetch Courses via Service
-        const courses = await getCourses();
-        setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
+        // Gunakan Promise.all agar fetch data berjalan paralel (lebih cepat)
+        const [userRes, courses, activityRes, durationRes, streakRes] = await Promise.all([
+          api.get("/auth/me"),
+          getCourses(),
+          api.get("/student/activity-calendar").catch(() => ({ data: [] })),
+          api.get("/student/study-duration").catch(() => ({ data: { totalMinutes: 0 } })),
+          api.get("/student/learning-streak").catch(() => ({ data: { currentStreak: 0 } }))
+        ]);
 
-        // 2. Fetch User Info menggunakan axios instance
-        const userRes = await api.get("/auth/me");
+        // Set Data ke State
         setUserName(userRes.data.name);
-
-        // 3. Fetch Activity Calendar
-        const activityRes = await api.get("/student/activity-calendar");
+        setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
         setActiveDays(activityRes.data);
-
-        // 4. Fetch Study Duration
-        const durationRes = await api.get("/student/study-duration");
         setTotalStudyMinutes(durationRes.data.totalMinutes || 0);
-
-        // 5. Fetch Streak
-        const streakRes = await api.get("/student/learning-streak");
         setStreak(streakRes.data.currentStreak || 0);
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        // Jika error 401 di sini, biarkan layout.js yang menangani redirectnya
       } finally {
         setLoading(false);
       }
     };
+
     fetchDashboardData();
   }, []);
 
@@ -61,7 +59,7 @@ export default function Dashboard() {
       const day = String(date.getDate()).padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
 
-      if (activeDays.includes(dateString)) {
+      if (Array.isArray(activeDays) && activeDays.includes(dateString)) {
         return "active-day-highlight";
       }
     }
@@ -96,7 +94,7 @@ export default function Dashboard() {
   // --- LOADING STATE ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-950 text-white font-black tracking-tighter uppercase">
+      <div className="flex items-center justify-center h-full bg-slate-950 text-white font-black tracking-tighter uppercase min-h-[60vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"></div>
         Syncing Your Progress...
       </div>
@@ -201,19 +199,19 @@ export default function Dashboard() {
 
           <div className="xl:col-span-2 flex flex-col gap-8">
             <div className="flex-1 bg-gradient-to-br from-blue-600 to-blue-900 rounded-[48px] p-10 relative overflow-hidden shadow-2xl group flex flex-col justify-center">
-               <div className="relative z-10">
-                 <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-md">
-                    <Clock className="text-white" size={32} />
-                 </div>
-                 <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">Lanjutkan Perjalananmu</h3>
-                 <p className="text-blue-100 text-lg mb-10 opacity-80 leading-relaxed font-medium italic text-xs">
-                   Waktu belajar Anda akan terakumulasi secara otomatis dan diperbarui pada login berikutnya.
-                 </p>
-                 <button className="bg-white text-blue-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-4 transition-all hover:gap-6 shadow-xl active:scale-95 w-fit">
-                   Mulai Belajar <ArrowUpRight size={20} strokeWidth={3} />
-                 </button>
-               </div>
-               <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-md">
+                     <Clock className="text-white" size={32} />
+                  </div>
+                  <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">Lanjutkan Perjalananmu</h3>
+                  <p className="text-blue-100 text-lg mb-10 opacity-80 leading-relaxed font-medium italic text-xs">
+                    Waktu belajar Anda akan terakumulasi secara otomatis dan diperbarui pada login berikutnya.
+                  </p>
+                  <button className="bg-white text-blue-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-4 transition-all hover:gap-6 shadow-xl active:scale-95 w-fit">
+                    Mulai Belajar <ArrowUpRight size={20} strokeWidth={3} />
+                  </button>
+                </div>
+                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/5 rounded-full blur-3xl"></div>
             </div>
           </div>
 
