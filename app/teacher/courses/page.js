@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
 import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
-// ✅ Menggunakan instance api (Axios)
+// ✅ IMPORT instance api (Axios)
 import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
 
@@ -11,7 +11,7 @@ export default function CoursePage() {
   const [courses, setCourses] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState(null);
-  const [loading, setLoading] = useState(true); // Tambahkan loading state untuk UX
+  const [loading, setLoading] = useState(true); 
   
   // STATE UNTUK EDIT
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,11 +31,12 @@ export default function CoursePage() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
+      // ✅ Mengambil data lengkap (Course + Module + Materi)
       const data = await getFullCourses();
-      // Pastikan data yang di-set adalah array agar tidak error .map
       setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching courses:", error);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,6 @@ export default function CoursePage() {
         };
         await updateMateri(editData.id, payload);
 
-        // ✅ PERBAIKAN: Gunakan rute API yang konsisten dengan prefix /api
         if (hasAssignment) {
           await api.post("/api/teacher/assignments/upsert", {
             materi_id: editData.id,
@@ -91,7 +91,6 @@ export default function CoursePage() {
             starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          // Hanya hapus jika memang sebelumnya ada assignment
           if (editData.assignment) {
             await api.delete(`/api/teacher/assignments/${editData.id}`);
           }
@@ -115,7 +114,6 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        // ✅ PERBAIKAN: Prefix /api/teacher/ sesuai backend Railway
         const endpoint = `/api/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
         await api.delete(endpoint);
       }
@@ -127,7 +125,6 @@ export default function CoursePage() {
     }
   };
 
-  // --- UI TETAP SAMA ---
   return (
     <div className="flex flex-col gap-6 p-2 min-h-screen bg-slate-950 text-white relative font-sans">
       
@@ -268,30 +265,41 @@ export default function CoursePage() {
                     </div>
                   </div>
 
+                  {/* ✅ LOGIKA PERBAIKAN: Pastikan module dan materi di-mapping dengan aman */}
                   {expandedCourse === course.id && (
                     <div className="bg-slate-950/40 border-t border-slate-800 p-6 animate-in slide-in-from-top-2 duration-300">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {course.modules?.map((module) => (
-                          <div key={module.id} className="bg-slate-900/50 border border-slate-800 p-5 rounded-[24px] relative group/mod hover:border-blue-500/30 transition-all">
-                            <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover/mod:opacity-100 transition-opacity">
-                              <button onClick={() => openEditModal("module", module)} className="p-1.5 text-slate-500 hover:text-blue-400"><Edit3 size={14}/></button>
-                              <button onClick={() => handleDelete('module', module.id, module.title)} className="p-1.5 text-slate-500 hover:text-red-500"><Trash2 size={14}/></button>
+                        {course.modules && course.modules.length > 0 ? (
+                          course.modules.map((module) => (
+                            <div key={module.id} className="bg-slate-900/50 border border-slate-800 p-5 rounded-[24px] relative group/mod hover:border-blue-500/30 transition-all">
+                              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover/mod:opacity-100 transition-opacity">
+                                <button onClick={() => openEditModal("module", module)} className="p-1.5 text-slate-500 hover:text-blue-400"><Edit3 size={14}/></button>
+                                <button onClick={() => handleDelete('module', module.id, module.title)} className="p-1.5 text-slate-500 hover:text-red-500"><Trash2 size={14}/></button>
+                              </div>
+                              <h4 className="font-black text-blue-500 mb-4 flex items-center gap-2 uppercase text-[10px] tracking-[0.2em] italic"><Package size={14} /> {module.title}</h4>
+                              
+                              <ul className="space-y-2 border-l-2 border-slate-800 ml-2 pl-4">
+                                {module.materi && module.materi.length > 0 ? (
+                                  module.materi.map((m) => (
+                                    <li key={m.id} className="group/item flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 cursor-default">
+                                      <span className="flex items-center gap-2 text-[13px] font-bold"><FileText size={14} className="text-slate-600" /> {m.title}</span>
+                                      <div className="flex gap-2 opacity-0 group-hover/item:opacity-100 transition-all">
+                                        <button onClick={() => openEditModal("materi", m)} className="hover:text-blue-400"><Edit3 size={12}/></button>
+                                        <button onClick={() => handleDelete('materi', m.id, m.title)} className="hover:text-red-500"><Trash2 size={12}/></button>
+                                      </div>
+                                    </li>
+                                  ))
+                                ) : (
+                                  <li className="text-[10px] text-slate-600 italic uppercase">Belum ada materi</li>
+                                )}
+                              </ul>
                             </div>
-                            <h4 className="font-black text-blue-500 mb-4 flex items-center gap-2 uppercase text-[10px] tracking-[0.2em] italic"><Package size={14} /> {module.title}</h4>
-                            
-                            <ul className="space-y-2 border-l-2 border-slate-800 ml-2 pl-4">
-                              {module.materi?.map((m) => (
-                                <li key={m.id} className="group/item flex items-center justify-between text-slate-400 hover:text-white transition-colors py-1 cursor-default">
-                                  <span className="flex items-center gap-2 text-[13px] font-bold"><FileText size={14} className="text-slate-600" /> {m.title}</span>
-                                  <div className="flex gap-2 opacity-0 group-hover/item:opacity-100 transition-all">
-                                    <button onClick={() => openEditModal("materi", m)} className="hover:text-blue-400"><Edit3 size={12}/></button>
-                                    <button onClick={() => handleDelete('materi', m.id, m.title)} className="hover:text-red-500"><Trash2 size={12}/></button>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
+                          ))
+                        ) : (
+                          <div className="col-span-full py-4 text-center text-slate-600 text-xs font-black uppercase tracking-widest italic opacity-50">
+                            Struktur Modul Belum Dibuat
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   )}

@@ -89,7 +89,7 @@ export default function TeacherNavbar() {
             {/* ✅ NAMA DINAMIS */}
             <p className="font-medium text-white">{user.name}</p>
             <p className="text-gray-400 text-xs flex items-center gap-1">
-               <ShieldCheck size={10} className="text-indigo-400" /> Admin
+               <ShieldCheck size={10} className="text-indigo-400" /> Teacher
             </p>
           </div>
         </div>
