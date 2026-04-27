@@ -16,20 +16,22 @@ export default function StudentLayout({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log("Sedang memverifikasi akses...");
         const res = await api.get("/auth/me");
-        console.log("Data User ditemukan:", res.data);
+        console.log("Berhasil verifikasi. Role:", res.data.role);
         
         if (res.data.role === "student") {
           setAuthorized(true);
         } else {
-          console.warn("Bukan Student, role Anda:", res.data.role);
           window.location.replace("/login");
         }
       } catch (err) {
-        // Cek apakah errornya 401 (Unauthorized) atau Network Error
-        console.error("Gagal Verifikasi:", err.response?.data || err.message);
-        window.location.replace("/login");
+        // JANGAN LANGSUNG REDIRECT, LIHAT ERRORNYA DULU DI CONSOLE
+        console.error("Detail Error Auth:", err.response?.data || err.message);
+        
+        // Hanya redirect jika memang benar-benar tidak ada token (401)
+        if (err.response?.status === 401) {
+           window.location.replace("/login");
+        }
       }
     };
 
