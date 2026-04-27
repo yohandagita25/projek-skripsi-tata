@@ -12,31 +12,31 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Mengirim request login ke backend Railway
+      // 1. Request Login
       const res = await api.post("/api/auth/login", { email, password });
 
       if (res.status === 200) {
         const { token, role } = res.data;
 
-        // 1. Simpan Token dan Role ke LocalStorage
+        // 2. Simpan ke LocalStorage (Untuk Axios Interceptor)
         localStorage.setItem("token", token);
         localStorage.setItem("userRole", role);
 
-        // 2. Alert Konfirmasi untuk memastikan data sudah tersimpan
-        alert("Login Berhasil! Klik OK untuk masuk ke Dashboard.");
+        // 3. Simpan ke COOKIE manual (PENTING: Agar Middleware/Layout Next.js tidak menendang user balik ke login)
+        document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax; Secure`;
 
-        // 3. Perpindahan Halaman (Gunakan window.location.href agar reload total)
-        // Ini solusi untuk status 307 yang Bapak alami agar tidak tertahan middleware
+        alert("Login Berhasil! Mengalihkan ke Dashboard...");
+
+        // 4. Eksekusi perpindahan halaman secara paksa
         if (role === "student") {
-          window.location.href = "/student/dashboard";
+          window.location.assign("/student/dashboard");
         } else if (role === "teacher") {
-          window.location.href = "/teacher/dashboard";
+          window.location.assign("/teacher/dashboard");
         } else {
-          alert("Role tidak dikenal: " + role);
+          alert("Role tidak dikenali: " + role);
         }
       }
     } catch (err) {
-      // Menangkap pesan error dari backend
       const errorMsg = err.response?.data?.error || err.message;
       alert("Gagal Login: " + errorMsg);
     }
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden">
-      {/* Animated Background */}
+      {/* Animated Background - UI Tetap Sesuai Asli */}
       <div className="absolute inset-0 -z-10">
         <div className="absolute w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-30 animate-pulse top-10 left-10"></div>
         <div className="absolute w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-30 animate-pulse bottom-10 right-10"></div>
