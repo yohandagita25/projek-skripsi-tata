@@ -9,24 +9,35 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-
   const handleLogin = async (e) => {
-    if (e) e.preventDefault();
+    e.preventDefault();
     try {
-      const res = await api.post("/auth/login", { email, password });
-
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("userRole", res.data.role);
-      }
-
-      if (res.data.role === "student") {
-        window.location.href = "/student/dashboard";
-      } else {
-        alert("Role tidak dikenali!");
+      const res = await api.post("/api/auth/login", { email, password });
+  
+      // Jika status 200, berarti login berhasil di server
+      if (res.status === 200) {
+        const { token, role } = res.data;
+  
+        // 1. Simpan data ke storage
+        localStorage.setItem("token", token);
+        localStorage.setItem("userRole", role);
+  
+        // 2. Beri pesan sukses agar Bapak tahu ini berhasil sebelum pindah
+        alert("Login Berhasil! Mengalihkan ke Dashboard...");
+  
+        // 3. Logika Perpindahan Berdasarkan Role
+        if (role === "student") {
+          window.location.replace("/student/dashboard"); // Gunakan replace agar tidak bisa 'back'
+        } else if (role === "teacher") {
+          window.location.replace("/teacher/dashboard");
+        } else {
+          alert("Role tidak dikenal: " + role);
+        }
       }
     } catch (err) {
-      console.error("Login Gagal:", err.response?.data || err.message);
+      // Jika eror, tampilkan pesannya di alert supaya terbaca
+      const errorMsg = err.response?.data?.error || err.message;
+      alert("Gagal Login: " + errorMsg);
     }
   };
   
