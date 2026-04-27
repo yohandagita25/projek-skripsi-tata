@@ -1,45 +1,46 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+// Gunakan fallback agar tidak error saat Secret tidak terbaca
+const secretString = process.env.JWT_SECRET || "rahasia_skripsi_tata_123";
+const secret = new TextEncoder().encode(secretString);
 
-export async function proxy(request) {
-
-  const token = request.cookies.get("token")?.value;
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get("token")?.value;
 
-  console.log("TOKEN:", token);
+  // 1. Biarkan rute login dan public lewat
+  if (pathname.startsWith("/login") || pathname === "/") {
+    return NextResponse.next();
+  }
 
+  // 2. Jika tidak ada token, langsung ke login
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   try {
-
-    const { payload } = await jwtVerify(token, secret, {
-      algorithms: ["HS256"], // penting
-    });
-
+    // 3. Verifikasi JWT
+    const { payload } = await jwtVerify(token, secret);
     const role = payload.role;
 
-    // proteksi student
+    // Proteksi Rute Student
     if (pathname.startsWith("/student") && role !== "student") {
-      return NextResponse.redirect(new URL("/teacher/dashboard", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
-    // proteksi teacher
+    // Proteksi Rute Teacher
     if (pathname.startsWith("/teacher") && role !== "teacher") {
-      return NextResponse.redirect(new URL("/student/dashboard", request.url));
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return NextResponse.next();
-
   } catch (err) {
-
-    console.log("JWT ERROR:", err);
-
-    return NextResponse.redirect(new URL("/login", request.url));
-
+    console.error("MIDDLEWARE JWT ERROR:", err.message);
+    // Jika JWT salah, hapus cookie dan pindah ke login
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.delete("token");
+    return response;
   }
 }
 
