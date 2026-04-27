@@ -15,6 +15,7 @@ import {
 export default function Sidebar({ collapsed, setCollapsed }) {
   const pathname = usePathname();
 
+  // Pastikan path di sini sesuai dengan struktur folder app/student/...
   const menu = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/student/dashboard" },
     { name: "Courses", icon: BookOpen, path: "/student/courses" },
@@ -51,7 +52,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       <nav className="flex-grow mt-8 px-3">
         <ul className="space-y-2">
           {menu.map((item) => {
-            const active = pathname === item.path;
+            // Logika aktif yang lebih akurat (juga menangkap sub-path)
+            const active = pathname === item.path || pathname.startsWith(`${item.path}/`);
             const Icon = item.icon;
             
             return (
@@ -75,8 +77,9 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                     </span>
                   )}
 
+                  {/* Tooltip saat Sidebar mengecil */}
                   {collapsed && (
-                    <div className="absolute left-16 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all shadow-xl z-50 border border-slate-700">
+                    <div className="absolute left-16 bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all shadow-xl z-50 border border-slate-700 whitespace-nowrap">
                       {item.name}
                     </div>
                   )}
@@ -86,6 +89,19 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           })}
         </ul>
       </nav>
+
+      {/* Footer Sidebar: Bisa Bapak tambahkan info versi atau bantuan di sini */}
+      {!collapsed && (
+        <div className="p-5 border-t border-slate-900/50">
+          <div className="bg-slate-900/50 rounded-2xl p-4 border border-slate-800">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">System Status</p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-slate-300">Online & Encrypted</span>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

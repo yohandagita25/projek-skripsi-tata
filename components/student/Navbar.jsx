@@ -3,48 +3,51 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, LogOut, ChevronDown, ShieldCheck, Mail, Sparkles } from "lucide-react";
+// 1. Import instance api yang sudah kita buat sebelumnya
+import { api } from "@/lib/api"; 
 
 export default function StudentNavbar({ collapsed }) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState({ name: "Loading...", email: "" }); // State untuk data user
+  const [user, setUser] = useState({ name: "Loading...", email: "" });
   const dropdownRef = useRef(null);
   const router = useRouter();
 
-  // 1. Ambil Data User dari Backend
+  // 2. Ambil Data User menggunakan instance API (Bukan fetch localhost)
   useEffect(() => {
-    // Di dalam StudentNavbar.js, bagian useEffect:
     const fetchUserData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          // Konsolkan untuk memastikan data masuk
-          console.log("User Data Received:", data); 
-          
+        // Menggunakan api.get agar interceptor Bearer Token otomatis bekerja
+        const res = await api.get("/api/auth/me");
+        
+        if (res.status === 200) {
+          console.log("User Data Received:", res.data); 
           setUser({
-            name: data.name, // Sesuai dengan hasil query SELECT name
-            email: data.email, // Sesuai dengan hasil query SELECT email
+            name: res.data.name,
+            email: res.data.email,
           });
         }
       } catch (error) {
-        console.error("Gagal mengambil data user:", error);
+        console.error("Gagal mengambil data user:", error.message);
+        setUser({ name: "User", email: "Error fetching data" });
       }
     };
     fetchUserData();
   }, []);
 
+  // 3. Handle Logout
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:5000/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      router.push("/");
+      // Hapus data lokal terlebih dahulu agar cepat
+      localStorage.clear();
+      
+      // Panggil backend untuk hapus cookie (opsional jika backend ada rutenya)
+      await api.post("/api/auth/logout");
+      
+      // Redirect ke Landing Page
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
+      window.location.href = "/";
     }
   };
 
@@ -64,7 +67,6 @@ export default function StudentNavbar({ collapsed }) {
       ${collapsed ? "left-20" : "left-64"}`}
     >
       <div className="flex items-center gap-6">
-        {/* Profil Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button 
             className={`flex items-center gap-3 p-1.5 pr-4 rounded-2xl transition-all border
@@ -72,14 +74,13 @@ export default function StudentNavbar({ collapsed }) {
             onClick={() => setOpen(!open)}
           >
             <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 group-hover:text-blue-500 transition-all">
-              <User size={20} strokeWidth={2.5} />
-            </div>
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 group-hover:text-blue-500 transition-all">
+                <User size={20} strokeWidth={2.5} />
+              </div>
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-slate-950 rounded-full shadow-lg"></div>
             </div>
 
             <div className="hidden md:block text-left">
-              {/* NAMA DINAMIS */}
               <p className="text-sm font-bold uppercase text-white mb-0.5">{user.name}</p>
               <p className="text-[10px] uppercase tracking-widest font-black text-blue-500 flex items-center gap-1">
                 <Sparkles size={8} /> Student
@@ -89,10 +90,8 @@ export default function StudentNavbar({ collapsed }) {
             <ChevronDown size={16} className={`text-slate-600 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
           </button>
 
-          {/* Menu Dropdown */}
           {open && (
             <div className="absolute right-0 top-full mt-4 w-64 bg-slate-900 border border-slate-800 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] z-[999] overflow-hidden animate-in fade-in zoom-in-95 duration-300">
-              {/* Profile Header */}
               <div className="p-5 border-b border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950">
                 <div className="flex items-center gap-3 mb-3">
                    <div className="p-2 bg-blue-600/10 rounded-lg text-blue-500">
@@ -100,12 +99,10 @@ export default function StudentNavbar({ collapsed }) {
                    </div>
                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Verified Student</span>
                 </div>
-                {/* EMAIL DINAMIS */}
                 <p className="text-sm text-slate-400 flex items-center gap-2">
                   <Mail size={14} /> {user.email}
                 </p>
               </div>
-              {/* Action Buttons */}
               <div className="p-3">
                 <button className="flex items-center gap-2 w-full px-4 py-3 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-2xl transition-all group">
                   <User size={18} className="text-slate-500 group-hover:text-blue-500" />

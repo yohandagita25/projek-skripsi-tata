@@ -24,25 +24,24 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Gunakan Promise.all agar fetch data berjalan paralel (lebih cepat)
+        // Konsistensi menggunakan /api sesuai backend Railway Bapak
         const [userRes, courses, activityRes, durationRes, streakRes] = await Promise.all([
-          api.get("/auth/me"),
-          getCourses(),
-          api.get("/student/activity-calendar").catch(() => ({ data: [] })),
-          api.get("/student/study-duration").catch(() => ({ data: { totalMinutes: 0 } })),
-          api.get("/student/learning-streak").catch(() => ({ data: { currentStreak: 0 } }))
+          api.get("/api/auth/me"),
+          getCourses(), // Pastikan di dalam service ini juga sudah pakai /api
+          api.get("/api/student/activity-calendar").catch(() => ({ data: [] })),
+          api.get("/api/student/study-duration").catch(() => ({ data: { totalMinutes: 0 } })),
+          api.get("/api/student/learning-streak").catch(() => ({ data: { currentStreak: 0 } }))
         ]);
 
         // Set Data ke State
-        setUserName(userRes.data.name);
+        if (userRes.data) setUserName(userRes.data.name);
         setStats(prev => ({ ...prev, enrolled: Array.isArray(courses) ? courses.length : 0 }));
-        setActiveDays(activityRes.data);
-        setTotalStudyMinutes(durationRes.data.totalMinutes || 0);
-        setStreak(streakRes.data.currentStreak || 0);
+        setActiveDays(activityRes.data || []);
+        setTotalStudyMinutes(durationRes.data?.totalMinutes || 0);
+        setStreak(streakRes.data?.currentStreak || 0);
 
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        // Jika error 401 di sini, biarkan layout.js yang menangani redirectnya
+        console.error("Dashboard Sync Error:", error.message);
       } finally {
         setLoading(false);
       }
@@ -51,7 +50,7 @@ export default function Dashboard() {
     fetchDashboardData();
   }, []);
 
-  // --- LOGIC HELPER (TETAP SAMA) ---
+  // --- LOGIC HELPER ---
   const getTileClass = ({ date, view }) => {
     if (view === "month") {
       const year = date.getFullYear();
@@ -76,40 +75,35 @@ export default function Dashboard() {
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     
-    if (hours > 0) {
-      return (
-        <>
-          {hours} <span className="text-lg text-blue-500 uppercase mx-1 italic tracking-wide">Jam</span> 
-          {minutes} <span className="text-lg text-blue-500 uppercase ml-1 italic tracking-wide">Menit</span>
-        </>
-      );
-    }
     return (
       <>
-        {minutes} <span className="text-lg text-blue-500 uppercase ml-2 italic tracking-wide">Menit</span>
+        {hours > 0 && (
+          <>
+            {hours} <span className="text-lg text-blue-500 uppercase mx-1 italic tracking-wide">Jam</span>
+          </>
+        )}
+        {minutes} <span className="text-lg text-blue-500 uppercase ml-1 italic tracking-wide">Menit</span>
       </>
     );
   };
 
-  // --- LOADING STATE ---
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-slate-950 text-white font-black tracking-tighter uppercase min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mr-4"></div>
-        Syncing Your Progress...
+      <div className="flex flex-col items-center justify-center h-full bg-slate-950 text-white min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_20px_rgba(37,99,235,0.3)]"></div>
+        <p className="font-black tracking-widest uppercase animate-pulse text-blue-400">Syncing Your Progress...</p>
       </div>
     );
   }
 
-  // --- UI RENDER (TETAP SAMA SESUAI DESAIN BAPAK) ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200">
       <div className="p-2 space-y-8">
         
         {/* HEADER SECTION */}
         <div className="mt-3 mb-12">
-          <h1 className="text-l font-black text-slate-600 uppercase tracking-tighter mb-2 leading-none select-none">Student Dashboard</h1>
-          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Welcome, {userName}</h2>
+          <h1 className="text-xs font-black text-slate-600 uppercase tracking-widest mb-2 select-none">Student Dashboard</h1>
+          <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-tight">Welcome, <span className="text-blue-500">{userName}</span></h2>
           <div className="w-24 h-2 bg-blue-600 mt-6 rounded-full shadow-[0_0_25px_rgba(37,99,235,0.4)]"></div>
         </div>
 
@@ -122,9 +116,7 @@ export default function Dashboard() {
             <div className="text-center md:text-left">
               <h4 className="mb-1 text-[10px] font-black uppercase tracking-[0.4em] text-orange-500">Learning Streak</h4>
               <div className="flex items-baseline justify-center md:justify-start gap-3">
-                <span className="text-5xl font-black tracking-tighter text-white">
-                  {streak}
-                </span>
+                <span className="text-6xl font-black tracking-tighter text-white">{streak}</span>
                 <span className="text-xl font-black uppercase italic tracking-widest text-orange-200/40">Hari Berturut-turut</span>
               </div>
               <p className="mt-1 text-[10px] font-medium text-slate-500 italic uppercase tracking-wider">
@@ -142,21 +134,16 @@ export default function Dashboard() {
               key={i}
               className="bg-slate-900/40 border border-slate-800/60 p-10 rounded-[48px] relative overflow-hidden group hover:border-slate-600 transition-all duration-500"
             >
-              <p className="text-slate-500 text-xl font-black uppercase tracking-normal mb-6 block select-none">
+              <p className="text-slate-500 text-sm font-black uppercase tracking-widest mb-6 block select-none">
                 {card.title}
               </p>
 
               <div className="flex items-center justify-between gap-4 relative z-10">
-                <div className="flex items-baseline gap-8">
-                  <h3 className="text-3xl font-black text-white tracking-tighter leading-none">
-                    {card.value}
-                  </h3>
-                  <span className="text-lg font-bold text-slate-600 uppercase tracking-normal">
-                    {card.unit}
-                  </span>
+                <div className="flex items-baseline gap-4">
+                  <h3 className="text-5xl font-black text-white tracking-tighter leading-none">{card.value}</h3>
+                  <span className="text-lg font-bold text-slate-600 uppercase">{card.unit}</span>
                 </div>
-
-                <div className={`p-4 rounded-3xl ${card.bg} ${card.color} shadow-xl group-hover:rotate-12 transition-transform duration-500 shrink-0`}>
+                <div className={`p-4 rounded-3xl ${card.bg} ${card.color} shadow-xl group-hover:rotate-12 transition-transform duration-500`}>
                   <card.icon size={32} />
                 </div>
               </div>
@@ -190,13 +177,14 @@ export default function Dashboard() {
             <div className="mt-10 pt-8 border-t border-slate-800/60 flex justify-between items-end">
               <div className="flex flex-col">
                 <span className="text-slate-500 text-xs font-black uppercase tracking-widest mb-2">Total Waktu Belajar</span>
-                <span className="text-3xl font-black text-white tracking-tighter leading-none">
+                <span className="text-4xl font-black text-white tracking-tighter leading-none">
                   {formatStudyTime(totalStudyMinutes)}
                 </span>
               </div>
             </div>
           </div>
 
+          {/* CTA SECTION */}
           <div className="xl:col-span-2 flex flex-col gap-8">
             <div className="flex-1 bg-gradient-to-br from-blue-600 to-blue-900 rounded-[48px] p-10 relative overflow-hidden shadow-2xl group flex flex-col justify-center">
                 <div className="relative z-10">
@@ -204,10 +192,10 @@ export default function Dashboard() {
                      <Clock className="text-white" size={32} />
                   </div>
                   <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">Lanjutkan Perjalananmu</h3>
-                  <p className="text-blue-100 text-lg mb-10 opacity-80 leading-relaxed font-medium italic text-xs">
-                    Waktu belajar Anda akan terakumulasi secara otomatis dan diperbarui pada login berikutnya.
+                  <p className="text-blue-100 text-sm mb-10 opacity-70 leading-relaxed font-medium italic">
+                    Waktu belajar Anda akan terakumulasi secara otomatis saat Anda mengerjakan modul.
                   </p>
-                  <button className="bg-white text-blue-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-4 transition-all hover:gap-6 shadow-xl active:scale-95 w-fit">
+                  <button className="bg-white text-blue-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-4 transition-all hover:gap-6 shadow-xl active:scale-95 w-fit">
                     Mulai Belajar <ArrowUpRight size={20} strokeWidth={3} />
                   </button>
                 </div>
