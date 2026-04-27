@@ -16,17 +16,19 @@ export default function StudentLayout({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // ✅ PERBAIKAN AXIOS: Pakai api.get (Axios otomatis kirim cookie)
+        console.log("Sedang memverifikasi akses...");
         const res = await api.get("/auth/me");
+        console.log("Data User ditemukan:", res.data);
         
         if (res.data.role === "student") {
           setAuthorized(true);
         } else {
-          // Jika bukan student, tendang ke login
+          console.warn("Bukan Student, role Anda:", res.data.role);
           window.location.replace("/login");
         }
       } catch (err) {
-        console.error("Satpam Dashboard: Akses Ditolak", err);
+        // Cek apakah errornya 401 (Unauthorized) atau Network Error
+        console.error("Gagal Verifikasi:", err.response?.data || err.message);
         window.location.replace("/login");
       }
     };
