@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+// ✅ Menggunakan instance api (Axios) dengan benar
 import { api } from "@/lib/api";
 import { 
   Trophy, 
@@ -17,16 +18,25 @@ export default function ChallengePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${api}/student/challenges`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        setChallenges(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+    const fetchChallengesData = async () => {
+      try {
+        setLoading(true);
+        // ✅ PERBAIKAN: Gunakan api.get (Axios instance)
+        // Rute ini memanggil exports.getChallenges di studentController.js
+        const res = await api.get("/api/student/challenges");
+        
+        // Sesuai controller Bapak, data dikirim langsung sebagai array
+        const data = res.data;
+        setChallenges(Array.isArray(data) ? data : []);
+      } catch (err) {
         console.error("Error fetching challenges:", err);
+        setChallenges([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchChallengesData();
   }, []);
 
   if (loading) return (
@@ -40,10 +50,10 @@ export default function ChallengePage() {
       {/* Header Halaman */}
       <header className="mb-12">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Initial Challenges</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter italic text-white">Initial Challenges</h1>
         </div>
-        <p className="text-slate-500 text-sm max-w-xl">
-          Selesaikan <span className="">Challenge awal</span> untuk setiap kursus untuk mengukur sejauh mana pengetahuan dasarmu sebelum memulai pembelajaran.
+        <p className="text-slate-500 text-sm max-w-xl italic">
+          Selesaikan <span className="text-blue-400 font-bold">Challenge awal</span> untuk setiap kursus untuk mengukur sejauh mana pengetahuan dasarmu sebelum memulai pembelajaran.
         </p>
       </header>
 
@@ -94,8 +104,8 @@ export default function ChallengePage() {
                 <Link 
                     href={
                         item.is_completed 
-                        ? `/student/test/review/${item.test_id}` // Jika sudah selesai, ke halaman Review
-                        : `/student/test/${item.course_id}/pretest/${item.test_id}` // Jika belum, ke halaman Pengerjaan
+                        ? `/student/test/review/${item.test_id}` 
+                        : `/student/test/${item.course_id}/pretest/${item.test_id}`
                     }
                     >
                     <button className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all
@@ -111,9 +121,9 @@ export default function ChallengePage() {
             </div>
           ))
         ) : (
-          <div className="col-span-full py-20 text-center text-slate-700 bg-slate-900/10 rounded-[50px] border border-dashed border-slate-800">
+          <div className="col-span-full py-32 text-center text-slate-700 bg-slate-900/10 border border-dashed border-slate-800 rounded-[50px]">
             <Trophy size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="italic font-black text-xs uppercase tracking-[0.3em]">Belum ada tantangan tersedia</p>
+            <p className="italic font-black text-[10px] uppercase tracking-[0.4em]">Belum ada tantangan tersedia</p>
           </div>
         )}
       </div>
