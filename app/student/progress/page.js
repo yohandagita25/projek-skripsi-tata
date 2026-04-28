@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// ✅ IMPORT instance api (Axios)
+// ✅ IMPORT instance api (Axios) yang sudah membawa baseURL & credentials
 import { api } from "@/lib/api";
 import { 
   BookOpen, CheckCircle2, Clock, AlertCircle, 
@@ -14,25 +14,36 @@ export default function StudentProgressPage() {
   const [selectedCourseId, setSelectedCourseId] = useState("");
 
   useEffect(() => {
-    // ✅ PERBAIKAN: Gunakan api.get untuk backend online & kirim cookie
-    api.get("/student/overall-progress")
-      .then((res) => {
-        const data = res.data; // Axios menggunakan res.data
-        console.log("Data Progress Diterima:", data);
-        setProgressData(data);
+    const fetchProgress = async () => {
+      try {
+        setLoading(true);
+        // ✅ PERBAIKAN: Gunakan api.get dengan prefix /api/
+        // Rute ini memanggil exports.getOverallProgress di studentController.js
+        const res = await api.get("/api/student/overall-progress");
         
-        if (data && data.length > 0) {
-          const initialId = data[0].course_id || data[0].id;
+        const data = res.data; 
+        console.log("Data Progress Diterima:", data);
+        
+        // Sesuai controller Bapak, data dikirim langsung sebagai array objek course
+        const results = Array.isArray(data) ? data : [];
+        setProgressData(results);
+        
+        if (results.length > 0) {
+          const initialId = results[0].course_id || results[0].id;
           setSelectedCourseId(String(initialId)); 
         }
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error load progress:", err);
+        setProgressData([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProgress();
   }, []);
 
+  // Mencari data course yang sedang dipilih di dropdown
   const selectedCourse = progressData.find(c => 
     String(c.course_id || c.id) === String(selectedCourseId)
   );
@@ -44,10 +55,10 @@ export default function StudentProgressPage() {
   );
 
   return (
-    <div className="p-2 space-y-10 bg-slate-950 min-h-screen text-slate-200">
+    <div className="p-2 space-y-10 bg-slate-950 min-h-screen text-slate-200 selection:bg-blue-500/30">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase">Learning Progress</h1>
+          <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase italic">Learning Progress</h1>
           <p className="text-slate-500 text-sm font-medium">Pilih kursus untuk melihat laporan capaian belajarmu.</p>
         </div>
 
@@ -59,7 +70,7 @@ export default function StudentProgressPage() {
           <select 
             value={selectedCourseId}
             onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 text-white text-sm rounded-2xl py-4 pl-12 pr-10 appearance-none outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+            className="w-full bg-slate-900 border border-slate-800 text-white text-xs font-black uppercase tracking-widest rounded-2xl py-4 pl-12 pr-10 appearance-none outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer shadow-xl"
           >
             <option value="" disabled>Pilih Kursus...</option>
             {progressData.map((course) => (
@@ -80,16 +91,17 @@ export default function StudentProgressPage() {
           <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] p-8 shadow-2xl backdrop-blur-md">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
               <div className="flex items-center gap-5">
-                <div className="bg-blue-600/20 p-5 rounded-3xl">
+                <div className="bg-blue-600/20 p-5 rounded-3xl shadow-inner">
                   <BookOpen className="text-blue-500" size={30} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight uppercase italic">{selectedCourse.course_title}</h2>
+                  <h2 className="text-2xl font-black tracking-tight uppercase italic text-white">{selectedCourse.course_title}</h2>
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Laporan Belajar Aktif</p>
                 </div>
               </div>
               
               <div className="flex gap-4 w-full md:w-auto">
+                {/* Data pretest & posttest diambil dari subquery di studentController */}
                 <TestBadge label="Pre-test" data={selectedCourse.pretest} color="blue" />
                 <TestBadge label="Post-test" data={selectedCourse.posttest} color="orange" />
               </div>
@@ -97,21 +109,22 @@ export default function StudentProgressPage() {
 
             <div className="h-px bg-slate-800/50 mb-10" />
 
+            {/* Grid List Tugas Praktek */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {selectedCourse.assignments_progress && selectedCourse.assignments_progress.length > 0 ? (
                 selectedCourse.assignments_progress.map((task, idx) => (
-                  <div key={idx} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[35px] flex flex-col justify-between hover:border-blue-500/50 transition-all group">
+                  <div key={idx} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[35px] flex flex-col justify-between hover:border-blue-500/50 transition-all group shadow-lg">
                     <div className="mb-6">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 mb-2">Sub-Bab</p>
-                      <h3 className="font-bold text-slate-200 text-lg leading-tight group-hover:text-white transition-colors uppercase">
+                      <h3 className="font-bold text-slate-200 text-lg leading-tight group-hover:text-white transition-colors uppercase italic">
                         {task.materi_title}
                       </h3>
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-800/50">
                       <StatusIndicator status={task.submission_status} score={task.submission_score} />
-                      {task.submission_score !== null && (
-                        <div className="text-2xl font-black text-blue-500">
+                      {task.submission_score !== null && task.submission_score !== undefined && (
+                        <div className="text-2xl font-black text-blue-500 italic">
                           {task.submission_score}
                         </div>
                       )}
@@ -119,8 +132,8 @@ export default function StudentProgressPage() {
                   </div>
                 ))
               ) : (
-                <div className="col-span-full py-16 text-center opacity-40 italic">
-                  <p>Tidak ada tugas di kursus ini.</p>
+                <div className="col-span-full py-20 text-center opacity-30 italic font-black uppercase tracking-[0.3em] text-xs">
+                  <p>Tidak ada tugas praktek terdeteksi.</p>
                 </div>
               )}
             </div>
@@ -136,9 +149,10 @@ export default function StudentProgressPage() {
 }
 
 function TestBadge({ label, data, color }) {
+  // Mengecek apakah data pretest/posttest sudah memiliki skor
   const hasScore = data?.score !== null && data?.score !== undefined;
   return (
-    <div className={`flex-1 md:w-36 px-6 py-4 rounded-[25px] border ${color === "blue" ? 'border-blue-500/20 bg-blue-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
+    <div className={`flex-1 md:w-36 px-6 py-4 rounded-[25px] border transition-all ${color === "blue" ? 'border-blue-500/20 bg-blue-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{label}</p>
       <div className="flex items-center gap-3">
         <Trophy size={16} className={hasScore ? (color === "blue" ? 'text-blue-500' : 'text-orange-500') : 'text-slate-800'} />
@@ -156,7 +170,7 @@ function StatusIndicator({ status, score }) {
       <AlertCircle size={12} /> <span>Belum Dikerjakan</span>
     </div>
   );
-  if (status === 'submitted') return (
+  if (status === 'submitted' && (score === null || score === undefined)) return (
     <div className="flex items-center gap-2 text-orange-500 text-[9px] font-black uppercase italic animate-pulse">
       <Clock size={12} /> <span>Menunggu Nilai</span>
     </div>
