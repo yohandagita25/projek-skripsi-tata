@@ -121,8 +121,8 @@ export default function Dashboard() {
         {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-10">
           <div>
-            <h1 className="text-[14px] font-black text-blue-500 uppercase tracking-[0.4em] mb-3">Welcome</h1>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">
+            <h1 className="text-xl font-black text-blue-500 uppercase tracking-[0.4em] mb-3">Welcome</h1>
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">
               {userName ? userName.split(" ")[0] : "Student"}!
             </h2>
           </div>
