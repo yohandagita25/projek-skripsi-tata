@@ -40,44 +40,50 @@ export default function PretestPage() {
     link.click();
   };
 
-  const handleImageUpload = async (e, type, qIndex, optIndex = null) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("image", file);
-    try {
-      // ✅ PERBAIKAN: Gunakan api.post (Otomatis membawa cookie & baseURL online)
-      const res = await api.post("/tests/upload-image", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      const imageUrl = res.data.url;
-      const updatedQuestions = [...questions];
-      if (type === "question") updatedQuestions[qIndex].question_image = imageUrl;
-      else updatedQuestions[qIndex].options[optIndex].option_image = imageUrl;
-      setQuestions(updatedQuestions);
-    } catch (err) { 
-      console.error(err);
-      alert("Gagal mengunggah gambar."); 
-    }
-  };
-
   const handleUpload = async () => {
     if (!file) return alert("Silakan pilih file .docx!");
     setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      // ✅ Pastikan di dalam testService.uploadDocx juga menggunakan 'api' (kecil)
-      const res = await uploadDocx(formData);
-      setQuestions(res.data.questions);
-      alert("✅ Dokumen berhasil dianalisis!");
+      
+      // ✅ Menggunakan service yang sudah kita perbaiki
+      const response = await uploadDocx(formData);
+      
+      // Backend kita me-return { data: { questions: [...] } }
+      const extractedQuestions = response.data?.questions || response.questions;
+      
+      if (extractedQuestions) {
+        setQuestions(extractedQuestions);
+        alert("✅ Dokumen berhasil dianalisis!");
+      } else {
+        throw new Error("Data soal tidak ditemukan");
+      }
     } catch (err) { 
       console.error(err);
-      alert("Gagal menganalisis file."); 
+      alert("Gagal menganalisis file. Pastikan format sesuai template."); 
+    } finally { 
+      setIsLoading(false); 
     }
-    finally { setIsLoading(false); }
   };
-
+  
+  // ... (Bagian handleImageUpload diperbaiki prefixnya)
+  const handleImageUpload = async (e, type, qIndex, optIndex = null) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      // ✅ Tambahkan prefix /api/
+      const res = await api.post("/api/tests/upload-image", formData);
+      const imageUrl = res.data.url;
+      const updatedQuestions = [...questions];
+      if (type === "question") updatedQuestions[qIndex].question_image = imageUrl;
+      else updatedQuestions[qIndex].options[optIndex].option_image = imageUrl;
+      setQuestions(updatedQuestions);
+    } catch (err) { alert("Gagal mengunggah gambar."); }
+  };
+  
   const handleCreate = async () => {
     if (!courseId || !title || questions.length === 0) return alert("Lengkapi data!");
     setIsSaving(true);
