@@ -121,14 +121,10 @@ export default function Dashboard() {
         {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-10">
           <div>
-            <h1 className="text-xl font-black text-blue-500 uppercase tracking-[0.4em] mb-3">Welcome</h1>
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">
-              {userName ? userName.split(" ")[0] : "Student"}!
+            <h1 className="text-xl font-black text-blue-500 uppercase tracking-tighter mb-3">Welcome</h1>
+            <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">
+              {userName}
             </h2>
-          </div>
-          <div className="flex items-center gap-3 bg-slate-900/50 px-6 py-3 rounded-2xl border border-slate-800">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live Learning Status</span>
           </div>
         </div>
 
