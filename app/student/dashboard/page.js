@@ -119,13 +119,10 @@ export default function Dashboard() {
       <div className="p-4 space-y-10 max-w-7xl mx-auto">
         
         {/* HEADER SECTION */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-10">
-          <div>
-            <h1 className="text-xl font-black text-blue-500 uppercase tracking-tighter mb-3">Welcome</h1>
-            <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">
-              {userName}
-            </h2>
-          </div>
+        <div className="mt-3 mb-12">
+          <h1 className="text-l font-black text-slate-600 uppercase tracking-tighter mb-2 leading-none select-none">Student Dashboard</h1>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Welcome, {userName}</h2>
+          <div className="w-24 h-2 bg-blue-600 mt-6 rounded-full shadow-[0_0_25px_rgba(37,99,235,0.4)]"></div>
         </div>
 
         {/* STREAK SECTION (TETAP) */}
