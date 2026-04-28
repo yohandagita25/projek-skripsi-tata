@@ -118,7 +118,7 @@ export default function PosttestPage() {
             <div className="p-2.5 bg-orange-600 rounded-2xl shadow-lg shadow-orange-900/40">
               <ClipboardCheck size={22} className="text-white" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase italic text-white">Input Post-test</h1>
+            <h1 className="text-3xl font-black tracking-tighter uppercase text-white">Input Post-test</h1>
           </div>
           <p className="text-slate-500 mt-2">Pratinjau ekstraksi otomatis soal dari dokumen Microsoft Word.</p>
         </div>

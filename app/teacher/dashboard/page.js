@@ -103,7 +103,7 @@ export default function TeacherDashboard() {
       
       {/* HEADER - Sesuai gambar image_31e412.png */}
       <div>
-        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 italic">
+        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4">
           <LayoutDashboard className="text-blue-500" size={40} />Teacher Dashboard
         </h1>
         <p className="text-slate-500 mt-2">

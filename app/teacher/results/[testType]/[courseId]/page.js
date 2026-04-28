@@ -57,7 +57,7 @@ export default function DetailedTestResults() {
 
       <header className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic">
+          <h1 className="text-4xl font-black uppercase tracking-tighter">
             Rekap Nilai {params.testType}
           </h1>
           <p className="text-slate-500 italic mt-1 font-medium">Data pengerjaan otomatis oleh sistem.</p>

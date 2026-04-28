@@ -61,7 +61,7 @@ export default function SubBabGrading() {
       </button>
 
       <header className="mb-12">
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 italic">Pilih Sub-Bab</h1>
+        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Pilih Sub-Bab</h1>
         <p className="text-slate-500 italic text-sm">Materi dengan indikator <span className="text-orange-500 font-bold underline">Orange</span> memerlukan penilaian segera.</p>
       </header>
 
@@ -98,7 +98,7 @@ export default function SubBabGrading() {
                     </h3>
                     <div className="flex items-center gap-4 mt-1">
                       <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-400">
-                        Work Type: {m.type === 'code' ? 'Coding Assignment' : 'Flowchart Logic'}
+                        Tipe Tugas: {m.type === 'code' ? 'Coding Assignment' : 'Flowchart Logic'}
                       </span>
                     </div>
                   </div>

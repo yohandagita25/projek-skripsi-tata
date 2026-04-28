@@ -48,7 +48,7 @@ export default function GradingDashboard() {
           <div className="bg-yellow-500/10 p-3 rounded-2xl border border-yellow-500/20">
             <Star className="text-yellow-500" size={28} />
           </div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic">Grading Center</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter">Grading Center</h1>
         </div>
         <p className="text-slate-500 mt-2">Pilih kursus untuk mulai melakukan penilaian tugas mandiri siswa.</p>
       </header>

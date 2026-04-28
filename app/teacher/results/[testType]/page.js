@@ -50,7 +50,7 @@ export default function SelectCourseResults() {
           <div className={`p-3 rounded-2xl ${isPretest ? "bg-blue-500/10 text-blue-500" : "bg-orange-500/10 text-orange-500"}`}>
             <Award size={28} />
           </div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter italic">
+          <h1 className="text-4xl font-black uppercase tracking-tighter">
              Nilai {params.testType}
           </h1>
         </div>
