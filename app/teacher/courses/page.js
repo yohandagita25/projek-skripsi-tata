@@ -32,7 +32,8 @@ export default function CoursePage() {
     try {
       setLoading(true);
       const data = await getFullCourses();
-      // Pastikan data adalah array agar tidak error .map
+      // ✅ SINKRONISASI: Backend kita sekarang mengirim { status, data: [] }
+      // getFullCourses di service sudah menangani unwrapping data.data
       setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -83,7 +84,7 @@ export default function CoursePage() {
         };
         await updateMateri(editData.id, payload);
 
-        // ✅ PERBAIKAN: Gunakan api.post & api.delete (Bukan fetch manual)
+        // ✅ PERBAIKAN: Gunakan api (Axios) bukan fetch manual agar Auth Token terkirim
         if (hasAssignment) {
           await api.post("/api/teacher/assignments/upsert", {
             materi_id: editData.id,
@@ -92,7 +93,7 @@ export default function CoursePage() {
             starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          // Hapus assignment jika dimatikan
+          // Hapus assignment jika fitur dimatikan
           await api.delete(`/api/teacher/assignments/${editData.id}`).catch(() => {});
         }
       }
@@ -102,7 +103,8 @@ export default function CoursePage() {
       fetchCourses(); 
     } catch (error) {
       console.error("Save error:", error);
-      alert("Gagal menyimpan perubahan: " + (error.response?.data?.error || error.message));
+      const msg = error.response?.data?.error || error.message;
+      alert("Gagal menyimpan perubahan: " + msg);
     }
   };
 
@@ -114,7 +116,7 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        // ✅ PERBAIKAN: Gunakan api.delete dengan prefix /api/teacher/
+        // ✅ PERBAIKAN: Gunakan api.delete dengan rute yang sinkron ke backend
         const endpoint = `/api/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
         await api.delete(endpoint);
       }
@@ -122,7 +124,8 @@ export default function CoursePage() {
       alert(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} berhasil dihapus!`);
       fetchCourses(); 
     } catch (error) { 
-      alert("Error: " + (error.response?.data?.error || error.message)); 
+      const msg = error.response?.data?.error || error.message;
+      alert("Error: " + msg); 
     }
   };
 
