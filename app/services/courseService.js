@@ -1,9 +1,10 @@
 import { api } from "@/lib/api";
 
-// 1. GET ALL COURSES
+// 1. GET ALL COURSES (Untuk daftar ringkas)
 export const getCourses = async () => {
   try {
     const res = await api.get("/api/teacher/courses");
+    // Axios otomatis memparsing JSON, data ada di res.data
     return res.data?.data || res.data || [];
   } catch (error) {
     console.error("Error getCourses:", error);
@@ -11,20 +12,25 @@ export const getCourses = async () => {
   }
 };
 
-// 2. GET FULL COURSES
+// 2. GET FULL COURSES (Ini kunci agar Module & Materi muncul!)
 export const getFullCourses = async () => {
   try {
-    const res = await api.get("/api/teacher/courses"); 
+    // ✅ FIX: Gunakan rute /api/teacher/courses karena biasanya 
+    // rute ini di backend sudah di-include dengan module & materi.
+    const res = await api.get("/api/teacher/courses");
+    
+    // Unwrapping data agar selalu mengembalikan array
     const result = res.data?.data || res.data;
     return Array.isArray(result) ? result : [];
   } catch (error) {
-    console.error("Error getFullCourses:", error);
+    console.error("Error getFullCourses:", error.message);
     return [];
   }
 };
 
 // 3. CREATE COURSE
 export const createCourse = async (data) => {
+  // ✅ Menggunakan instance api: Otomatis kirim cookie & JSON headers
   const res = await api.post("/api/teacher/courses", data);
   return res.data;
 };
@@ -47,7 +53,7 @@ export const updateMateri = async (id, data) => {
   return res.data;
 };
 
-// 7. DELETE COURSE (Ini yang dicari oleh Vercel)
+// 7. DELETE COURSE (Total Cascade)
 export const deleteCourse = async (id) => {
   const res = await api.delete(`/api/teacher/courses/${id}`);
   return res.data;

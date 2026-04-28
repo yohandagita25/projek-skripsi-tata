@@ -2,27 +2,50 @@ import { api } from "@/lib/api";
 
 // 1. GET MATERI BY MODULE
 export const getMateriByModule = async (moduleId) => {
-  // ✅ Axios menggunakan .data, bukan .json()
-  const res = await api.get(`/modules/${moduleId}/materi`);
-  return res.data;
+  try {
+    // ✅ PERBAIKAN: Menggunakan api.get dengan prefix /api
+    const res = await api.get(`/api/teacher/materi/module/${moduleId}`);
+    
+    // Axios otomatis memparsing JSON ke dalam properti .data
+    return res.data?.data || res.data || [];
+  } catch (error) {
+    console.error("Error getMateriByModule:", error.message);
+    return [];
+  }
 };
 
 // 2. CREATE MATERI
 export const createMateri = async (data) => {
-  // ✅ Pakai api.post agar cookie otomatis terkirim
-  const res = await api.post("/teacher/materi", data);
-  return res.data;
+  try {
+    // ✅ PERBAIKAN: Menggunakan api.post (Otomatis membawa cookie auth)
+    const res = await api.post("/api/teacher/materi", data);
+    return res.data;
+  } catch (error) {
+    console.error("Error createMateri:", error.message);
+    throw error;
+  }
 };
 
 // 3. UPDATE MATERI
 export const updateMateri = async (id, data) => {
-  // ✅ ID dimasukkan ke URL, data sebagai body
-  const res = await api.put(`/teacher/materi/${id}`, data);
-  return res.data;
+  try {
+    // ✅ PERBAIKAN: Sinkronisasi rute PUT
+    const res = await api.put(`/api/teacher/materi/${id}`, data);
+    return res.data;
+  } catch (error) {
+    console.error("Error updateMateri:", error.message);
+    throw error;
+  }
 };
 
 // 4. DELETE MATERI
 export const deleteMateri = async (id) => {
-  const res = await api.delete(`/teacher/materi/${id}`);
-  return res.data;
+  try {
+    // ✅ PERBAIKAN: Menggunakan api.delete
+    const res = await api.delete(`/api/teacher/materi/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error deleteMateri:", error.message);
+    throw error;
+  }
 };
