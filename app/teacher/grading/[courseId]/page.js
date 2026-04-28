@@ -13,7 +13,7 @@ import {
   Loader2,
   FileCode,
   GitGraph
-} from "lucide-center"; // Jika lucide-center error, gunakan lucide-react
+} from "lucide-react";
 
 export default function SubBabGrading() {
   const params = useParams();
