@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
-import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-center";
+import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
 // ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
 import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
