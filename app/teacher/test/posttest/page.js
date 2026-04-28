@@ -35,7 +35,7 @@ export default function PosttestPage() {
 
   const downloadTemplate = () => {
     const link = document.createElement("a");
-    link.href = "/template_soal_lms.docx"; 
+    link.href = "/templates/template_soal_lms.docx"; 
     link.download = "Template_Soal_Posttest.docx";
     link.click();
   };
@@ -46,8 +46,8 @@ export default function PosttestPage() {
     const formData = new FormData();
     formData.append("image", file);
     try {
-      // ✅ PERBAIKAN: Gunakan api.post (Otomatis membawa cookie & baseURL online)
-      const res = await api.post("/tests/upload-image", formData, {
+      // ✅ SINKRONISASI: Menggunakan instance api untuk upload gambar
+      const res = await api.post("/api/tests/upload-image", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       const imageUrl = res.data.url;
@@ -67,13 +67,22 @@ export default function PosttestPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      // ✅ Pastikan di dalam testService.uploadDocx juga menggunakan 'api' (kecil)
-      const res = await uploadDocx(formData);
-      setQuestions(res.data.questions);
-      alert("✅ Dokumen berhasil dianalisis!");
+      
+      // ✅ Panggil service yang sudah diperbaiki
+      const response = await uploadDocx(formData);
+      
+      // Sinkronisasi unwrapping data { data: { questions: [] } }
+      const extractedQuestions = response.data?.questions || response.questions;
+
+      if (extractedQuestions && Array.isArray(extractedQuestions)) {
+        setQuestions(extractedQuestions);
+        alert("✅ Dokumen berhasil dianalisis!");
+      } else {
+        alert("⚠️ File terbaca, tapi format soal tidak terdeteksi.");
+      }
     } catch (err) { 
-      console.error(err);
-      alert("Gagal menganalisis file."); 
+      console.error("Upload error:", err);
+      alert("Gagal menganalisis file: " + (err.response?.data?.error || err.message)); 
     }
     finally { setIsLoading(false); }
   };
@@ -82,32 +91,38 @@ export default function PosttestPage() {
     if (!courseId || !title || questions.length === 0) return alert("Lengkapi data!");
     setIsSaving(true);
     try {
-      // ✅ Pastikan di dalam testService.createTest juga menggunakan 'api' (kecil)
-      await createTest({ course_id: courseId, type: "posttest", title, duration: 30, questions });
+      // ✅ Simpan sebagai posttest
+      await createTest({ 
+        course_id: courseId, 
+        type: "posttest", 
+        title, 
+        duration: 30, 
+        questions 
+      });
       alert("🎉 Post-test Berhasil Tersimpan!");
       setQuestions([]); setTitle(""); setFile(null); setCourseId("");
     } catch (err) { 
-      console.error(err);
-      alert("Gagal menyimpan."); 
+      console.error("Save error:", err);
+      alert("Gagal menyimpan: " + (err.response?.data?.error || err.message)); 
     }
     finally { setIsSaving(false); }
   };
 
   return (
-    <div className="flex flex-col gap-8 p-2 min-h-screen bg-slate-950 text-white selection:bg-blue-500/30">
+    <div className="flex flex-col gap-8 p-2 min-h-screen bg-slate-950 text-white selection:bg-orange-500/30">
       
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-800 pb-8 gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 bg-orange-600 rounded-2xl shadow-lg shadow-blue-900/40">
+            <div className="p-2.5 bg-orange-600 rounded-2xl shadow-lg shadow-orange-900/40">
               <ClipboardCheck size={22} className="text-white" />
             </div>
             <h1 className="text-3xl font-black tracking-tighter uppercase italic text-white">Input Post-test</h1>
           </div>
           <p className="text-slate-500 mt-2">Pratinjau ekstraksi otomatis soal dari dokumen Microsoft Word.</p>
         </div>
-        <button onClick={handleCreate} disabled={isSaving} className="flex items-center gap-3 bg-green-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-blue-900/20">
+        <button onClick={handleCreate} disabled={isSaving} className="flex items-center gap-3 bg-green-600 hover:bg-orange-500 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-orange-900/20">
           {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} Simpan Post-test
         </button>
       </div>
@@ -116,8 +131,8 @@ export default function PosttestPage() {
         
         {/* Kolom Kiri: Panel Informasi & Config */}
         <div className="lg:col-span-1 space-y-8">
-          <div className="bg-blue-600/5 border border-blue-500/20 p-8 rounded-[40px] space-y-5">
-            <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-blue-400 flex items-center gap-2">
+          <div className="bg-orange-600/5 border border-orange-500/20 p-8 rounded-[40px] space-y-5">
+            <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-orange-400 flex items-center gap-2">
               <Info size={35} /> Panduan Input
             </h3>
             <div className="space-y-4">
@@ -128,14 +143,14 @@ export default function PosttestPage() {
                  "Jangan gunakan bullet and numbering pada word."
                ].map((text, i) => (
                  <div key={i} className="flex gap-4 items-start">
-                    <div className="mt-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
-                        <Check size={10} className="text-blue-400" />
+                    <div className="mt-1 h-5 w-5 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center shrink-0">
+                        <Check size={10} className="text-orange-400" />
                     </div>
                     <span className="text-[13px] text-slate-300 leading-relaxed font-medium">{text}</span>
                  </div>
                ))}
             </div>
-            <button onClick={downloadTemplate} className="w-full mt-4 flex items-center justify-center gap-3 bg-slate-900 border border-slate-800 hover:border-blue-500 text-white p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner">
+            <button onClick={downloadTemplate} className="w-full mt-4 flex items-center justify-center gap-3 bg-slate-900 border border-slate-800 hover:border-orange-500 text-white p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-inner">
               <Download size={14} /> Unduh Template .Docx
             </button>
           </div>
@@ -143,17 +158,17 @@ export default function PosttestPage() {
           <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-[40px] space-y-6 shadow-2xl">
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Konfigurasi</h3>
             <div className="space-y-5">
-              <select className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold text-white transition-all appearance-none" onChange={(e) => setCourseId(e.target.value)} value={courseId}>
+              <select className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-orange-500 outline-none text-sm font-bold text-white transition-all appearance-none" onChange={(e) => setCourseId(e.target.value)} value={courseId}>
                 <option value="">Pilih Mata Pelajaran...</option>
                 {availableCourses?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
-              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-blue-500 outline-none text-sm font-bold transition-all text-white" placeholder="Judul Post-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
-              <label htmlFor="posttestUpload" className="w-full flex flex-col items-center justify-center gap-4 bg-slate-950 border-2 border-dashed border-slate-800 p-10 rounded-[32px] cursor-pointer hover:border-blue-500 hover:bg-blue-600/5 transition-all">
+              <input className="w-full bg-slate-950 p-4 rounded-2xl border border-slate-800 focus:border-orange-500 outline-none text-sm font-bold transition-all text-white" placeholder="Judul Post-test..." value={title} onChange={(e) => setTitle(e.target.value)} />
+              <label htmlFor="posttestUpload" className="w-full flex flex-col items-center justify-center gap-4 bg-slate-950 border-2 border-dashed border-slate-800 p-10 rounded-[32px] cursor-pointer hover:border-orange-500 hover:bg-orange-600/5 transition-all">
                   <Upload className="text-slate-500" />
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">{file ? file.name : "Upload File Word"}</span>
                   <input type="file" accept=".docx" onChange={(e) => setFile(e.target.files[0])} className="hidden" id="posttestUpload" />
               </label>
-              <button onClick={handleUpload} disabled={isLoading} className="w-full py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] bg-white text-slate-950 hover:bg-blue-600 hover:text-white transition-all shadow-xl disabled:opacity-50">
+              <button onClick={handleUpload} disabled={isLoading} className="w-full py-5 rounded-[24px] font-black text-[10px] uppercase tracking-[0.3em] bg-white text-slate-950 hover:bg-orange-600 hover:text-white transition-all shadow-xl disabled:opacity-50">
                 {isLoading ? "Analyzing..." : "Generate Preview"}
               </button>
             </div>
@@ -173,13 +188,13 @@ export default function PosttestPage() {
             </div>
           ) : (
             questions.map((q, i) => {
-              const lines = q.questionText.split("\n").filter(l => l.trim() !== "");
+              const lines = q.questionText?.split("\n").filter(l => l.trim() !== "") || [];
               
               return (
                 <div key={i} className="bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] relative hover:border-slate-700 transition-all mb-6">
                   
                   <div className="flex justify-between items-center mb-8">
-                    <span className="bg-blue-600 text-white text-[10px] font-black px-5 py-2 rounded-xl uppercase tracking-widest italic shadow-lg">
+                    <span className="bg-orange-600 text-white text-[10px] font-black px-5 py-2 rounded-xl uppercase tracking-widest italic shadow-lg">
                        Soal #{i + 1}
                     </span>
                   </div>
@@ -190,7 +205,7 @@ export default function PosttestPage() {
                         key={idx} 
                         className={`text-lg leading-relaxed tracking-tight ${
                           idx === 0 || idx === lines.length - 1 
-                          ? "text-blue-300 font-bold" 
+                          ? "text-orange-300 font-bold" 
                           : "text-slate-200 font-medium ml-1"
                         }`}
                       >
@@ -205,13 +220,13 @@ export default function PosttestPage() {
                     </div>
                   )}
                   
-                  <label className="mb-8 flex items-center gap-3 bg-slate-950 border border-slate-800 px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 cursor-pointer hover:text-blue-400 transition-all w-fit shadow-lg">
+                  <label className="mb-8 flex items-center gap-3 bg-slate-950 border border-slate-800 px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-500 cursor-pointer hover:text-orange-400 transition-all w-fit shadow-lg">
                     <ImageIcon size={16} /> {q.question_image ? "Ganti Gambar Soal" : "Tambah Gambar Soal"}
                     <input type="file" className="hidden" onChange={(e) => handleImageUpload(e, "question", i)} />
                   </label>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {q.options.map((opt, j) => (
+                    {q.options?.map((opt, j) => (
                       <div key={j} className={`p-6 rounded-[32px] border-2 flex flex-col gap-4 transition-all ${opt.label === q.answer ? "bg-green-500/5 border-green-500/30 shadow-inner" : "bg-slate-950 border-slate-900"}`}>
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex gap-4 text-sm font-bold items-center">
@@ -220,10 +235,10 @@ export default function PosttestPage() {
                             </span>
                             <span className={`leading-relaxed whitespace-pre-line ${opt.label === q.answer ? "text-green-400" : "text-slate-400"}`}>{opt.text}</span>
                           </div>
-                          <label className="cursor-pointer text-slate-700 hover:text-blue-500 p-2 bg-slate-900 rounded-xl block hover:scale-110 transition-all group relative">
+                          <label className="cursor-pointer text-slate-700 hover:text-orange-500 p-2 bg-slate-900 rounded-xl block hover:scale-110 transition-all group relative">
                             <ImageIcon size={18} />
                             <input type="file" className="hidden" onChange={(e) => handleImageUpload(e, "option", i, j)} />
-                            <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block bg-blue-600 text-white text-[8px] px-2 py-1 rounded whitespace-nowrap z-10">Opsi Gambar</div>
+                            <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block bg-orange-600 text-white text-[8px] px-2 py-1 rounded whitespace-nowrap z-10">Opsi Gambar</div>
                           </label>
                         </div>
                         {opt.option_image && <img src={opt.option_image} className="rounded-xl border border-slate-800 mt-2 w-full object-cover" alt="Opsi" />}
