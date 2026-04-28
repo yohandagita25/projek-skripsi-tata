@@ -40,33 +40,36 @@ export default function PretestPage() {
     link.click();
   };
 
-  const handleUpload = async () => {
-    if (!file) return alert("Silakan pilih file .docx!");
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      // ✅ Menggunakan service yang sudah kita perbaiki
-      const response = await uploadDocx(formData);
-      
-      // Backend kita me-return { data: { questions: [...] } }
-      const extractedQuestions = response.data?.questions || response.questions;
-      
-      if (extractedQuestions) {
-        setQuestions(extractedQuestions);
-        alert("✅ Dokumen berhasil dianalisis!");
-      } else {
-        throw new Error("Data soal tidak ditemukan");
-      }
-    } catch (err) { 
-      console.error(err);
-      alert("Gagal menganalisis file. Pastikan format sesuai template."); 
-    } finally { 
-      setIsLoading(false); 
+  // Cari fungsi handleUpload di page.js Bapak, ganti isinya dengan ini:
+const handleUpload = async () => {
+  if (!file) return alert("Silakan pilih file .docx!");
+  setIsLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    // ✅ Panggil service
+    const response = await uploadDocx(formData);
+    
+    // ✅ SINKRONISASI DATA: 
+    // Backend Bapak mengirim { status: "success", data: { questions: [...] } }
+    // Maka cara ambilnya adalah: response.data.questions
+    const extractedQuestions = response.data?.questions || response.questions;
+
+    if (extractedQuestions && Array.isArray(extractedQuestions)) {
+      setQuestions(extractedQuestions);
+      alert("✅ Dokumen berhasil dianalisis!");
+    } else {
+      alert("⚠️ File terbaca, tapi tidak ada soal yang terdeteksi. Cek format template!");
     }
-  };
-  
+  } catch (err) { 
+    console.error("Detail Error:", err);
+    alert("Gagal menganalisis file: " + (err.response?.data?.error || err.message)); 
+  } finally { 
+    setIsLoading(false); 
+  }
+};
+
   // ... (Bagian handleImageUpload diperbaiki prefixnya)
   const handleImageUpload = async (e, type, qIndex, optIndex = null) => {
     const file = e.target.files[0];
@@ -83,7 +86,7 @@ export default function PretestPage() {
       setQuestions(updatedQuestions);
     } catch (err) { alert("Gagal mengunggah gambar."); }
   };
-  
+
   const handleCreate = async () => {
     if (!courseId || !title || questions.length === 0) return alert("Lengkapi data!");
     setIsSaving(true);
