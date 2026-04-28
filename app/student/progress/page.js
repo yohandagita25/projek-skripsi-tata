@@ -17,14 +17,10 @@ export default function StudentProgressPage() {
     const fetchProgress = async () => {
       try {
         setLoading(true);
-        // ✅ PERBAIKAN: Gunakan api.get dengan prefix /api/
-        // Rute ini memanggil exports.getOverallProgress di studentController.js
+        // ✅ Menembak API Progress
         const res = await api.get("/api/student/overall-progress");
-        
         const data = res.data; 
-        console.log("Data Progress Diterima:", data);
         
-        // Sesuai controller Bapak, data dikirim langsung sebagai array objek course
         const results = Array.isArray(data) ? data : [];
         setProgressData(results);
         
@@ -43,7 +39,6 @@ export default function StudentProgressPage() {
     fetchProgress();
   }, []);
 
-  // Mencari data course yang sedang dipilih di dropdown
   const selectedCourse = progressData.find(c => 
     String(c.course_id || c.id) === String(selectedCourseId)
   );
@@ -85,7 +80,6 @@ export default function StudentProgressPage() {
         </div>
       </header>
 
-      {/* MAIN CONTENT AREA */}
       {selectedCourse ? (
         <div key={selectedCourseId} className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
           <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] p-8 shadow-2xl backdrop-blur-md">
@@ -101,7 +95,6 @@ export default function StudentProgressPage() {
               </div>
               
               <div className="flex gap-4 w-full md:w-auto">
-                {/* Data pretest & posttest diambil dari subquery di studentController */}
                 <TestBadge label="Pre-test" data={selectedCourse.pretest} color="blue" />
                 <TestBadge label="Post-test" data={selectedCourse.posttest} color="orange" />
               </div>
@@ -109,13 +102,15 @@ export default function StudentProgressPage() {
 
             <div className="h-px bg-slate-800/50 mb-10" />
 
-            {/* Grid List Tugas Praktek */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {selectedCourse.assignments_progress && selectedCourse.assignments_progress.length > 0 ? (
                 selectedCourse.assignments_progress.map((task, idx) => (
                   <div key={idx} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[35px] flex flex-col justify-between hover:border-blue-500/50 transition-all group shadow-lg">
                     <div className="mb-6">
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 mb-2">Sub-Bab</p>
+                      {/* ✅ PERBAIKAN: Menggunakan module_title dari database */}
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 mb-2 truncate">
+                        {task.module_title || "MODUL PELATIHAN"}
+                      </p>
                       <h3 className="font-bold text-slate-200 text-lg leading-tight group-hover:text-white transition-colors uppercase italic">
                         {task.materi_title}
                       </h3>
@@ -148,8 +143,8 @@ export default function StudentProgressPage() {
   );
 }
 
+// Sub-komponen tetap sama sesuai permintaan (Jangan ubah UI)
 function TestBadge({ label, data, color }) {
-  // Mengecek apakah data pretest/posttest sudah memiliki skor
   const hasScore = data?.score !== null && data?.score !== undefined;
   return (
     <div className={`flex-1 md:w-36 px-6 py-4 rounded-[25px] border transition-all ${color === "blue" ? 'border-blue-500/20 bg-blue-500/5' : 'border-orange-500/20 bg-orange-500/5'}`}>
