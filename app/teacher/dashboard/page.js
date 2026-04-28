@@ -91,9 +91,10 @@ export default function TeacherDashboard() {
     );
   }
 
+  // ✅ PERBAIKAN ReferenceError: Menggunakan komponen Icon langsung tanpa typo variabel 'text'
   const cards = [
     { title: "Total Courses", value: stats.courses, icon: BookOpen, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { title: "Total Students", value: stats.students, icon: text-green-500 ? "text-green-500" : "text-emerald-500", bg: "bg-green-500/10" },
+    { title: "Total Students", value: stats.students, icon: Users, color: "text-green-500", bg: "bg-green-500/10" },
     { title: "Total Modules", value: stats.modules, icon: Layout, color: "text-purple-500", bg: "bg-purple-500/10" },
   ];
 
@@ -118,12 +119,12 @@ export default function TeacherDashboard() {
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <h2 className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{card.title}</h2>
-                <p className={`text-5xl font-black ${card.title === "Total Students" ? "text-green-500" : card.color} tracking-tighter mt-2`}>
+                <p className={`text-5xl font-black ${card.color} tracking-tighter mt-2`}>
                   {card.value}
                 </p>
               </div>
-              <div className={`p-4 rounded-2xl ${card.bg} ${card.title === "Total Students" ? "text-green-500" : card.color} group-hover:scale-110 transition-transform shadow-lg`}>
-                {card.title === "Total Students" ? <Users size={24} /> : <card.icon size={24} />}
+              <div className={`p-4 rounded-2xl ${card.bg} ${card.color} group-hover:scale-110 transition-transform shadow-lg`}>
+                <card.icon size={24} />
               </div>
             </div>
           </div>
