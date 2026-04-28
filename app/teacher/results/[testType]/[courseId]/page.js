@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
 import { api } from "@/lib/api";
-import { ChevronLeft, Search, Loader2, Trophy, User, Download } from "lucide-react";
+import { ChevronLeft, Search, Loader2, Trophy, User } from "lucide-react";
 
 export default function DetailedTestResults() {
   const params = useParams();
@@ -16,13 +15,16 @@ export default function DetailedTestResults() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie & baseURL Railway)
-        const res = await api.get(`/teacher/results/${params.testType}/${params.courseId}`);
+        setLoading(true);
+        // ✅ PERBAIKAN: Pastikan mengarah ke /api/tests/...
+        const res = await api.get(`/api/tests/results/${params.testType}/${params.courseId}`);
         
-        // Axios meletakkan data di properti .data
-        setResults(res.data || []);
+        // Unwrapping data sesuai format backend { status, data }
+        const dataResult = res.data?.data || res.data || [];
+        setResults(Array.isArray(dataResult) ? dataResult : []);
       } catch (err) {
         console.error("Error fetching results:", err);
+        setResults([]);
       } finally {
         setLoading(false);
       }
@@ -33,6 +35,7 @@ export default function DetailedTestResults() {
     }
   }, [params.testType, params.courseId]);
 
+  // Filter pencarian berdasarkan nama siswa
   const filtered = results.filter(r => 
     r.student_name?.toLowerCase().includes(search.toLowerCase())
   );
@@ -54,7 +57,7 @@ export default function DetailedTestResults() {
 
       <header className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter">
+          <h1 className="text-4xl font-black uppercase tracking-tighter italic">
             Rekap Nilai {params.testType}
           </h1>
           <p className="text-slate-500 italic mt-1 font-medium">Data pengerjaan otomatis oleh sistem.</p>
@@ -64,6 +67,7 @@ export default function DetailedTestResults() {
           <input 
             type="text" placeholder="Cari Siswa..." 
             className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white"
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
@@ -108,8 +112,8 @@ export default function DetailedTestResults() {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="p-20 text-center text-slate-600 italic font-medium">
-                  Belum ada data nilai yang tersedia untuk kursus ini.
+                <td colSpan="4" className="p-20 text-center text-slate-600 italic font-medium uppercase text-xs tracking-widest opacity-30">
+                  Belum ada data nilai siswa.
                 </td>
               </tr>
             )}
