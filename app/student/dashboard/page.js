@@ -174,7 +174,7 @@ export default function Dashboard() {
           <div className="xl:col-span-3 bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] shadow-2xl relative overflow-hidden">
             <div className="flex items-center justify-between mb-10">
               <div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">Activity Logs</h3>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Activity Logs</h3>
                 <p className="text-slate-500 text-[10px] font-black tracking-[0.2em] uppercase mt-1">Kalender Keaktifan Belajar</p>
               </div>
               <div className="p-4 bg-slate-800 rounded-2xl text-slate-400">
@@ -204,12 +204,12 @@ export default function Dashboard() {
                   <div className="w-20 h-20 bg-white/10 rounded-[32px] flex items-center justify-center mb-10 backdrop-blur-xl border border-white/10 group-hover:scale-110 transition-transform duration-700">
                      <Timer className="text-white" size={40} />
                   </div>
-                  <h3 className="text-4xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">Mastering<br/>Logic Now</h3>
+                  <h3 className="text-4xl font-black text-white mb-4 uppercase tracking-tighter leading-tight">Mari<br/>Lanjutkan Belajar</h3>
                   <p className="text-blue-100 text-xs mb-10 opacity-60 leading-relaxed font-bold uppercase tracking-widest italic">
-                    Waktu belajar otomatis dicatat sistem.
+                    Belajar dengan konsisten adalah kunci untuk menguasai pemrograman. Klik tombol di bawah untuk melanjutkan perjalanan belajarmu dan raih pencapaian baru!
                   </p>
                   <button onClick={() => window.location.href='/student/courses'} className="bg-white text-blue-900 px-10 py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-4 transition-all hover:bg-blue-50 shadow-2xl active:scale-95 w-fit">
-                    Continue Learning <ArrowUpRight size={18} strokeWidth={4} />
+                    Lanjutkan Belajar <ArrowUpRight size={18} strokeWidth={4} />
                   </button>
                 </div>
                 <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-blue-400/20 rounded-full blur-[120px]"></div>
