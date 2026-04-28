@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Search, User, ArrowRight, LayoutGrid, BookOpen } from "lucide-react";
 import Link from "next/link";
-// ✅ IMPORT instance api (Axios)
-import { api } from "@/lib/api"; 
+// ✅ IMPORT instance api agar sinkron dengan baseURL Railway
+import { api } from "@/lib/api";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -14,14 +14,17 @@ export default function CoursesPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // ✅ PERBAIKAN: Gunakan api.get agar menembak backend online & kirim cookie
-        const res = await api.get("/courses");
+        setLoading(true);
+        // ✅ PERBAIKAN: Gunakan instance api.get
+        // Tidak perlu menulis http://localhost lagi karena sudah ada di lib/api.js
+        const res = await api.get("/api/courses");
         
-        // Axios menyimpan data di res.data
-        const data = res.data;
-        setCourses(Array.isArray(data) ? data : []);
+        // Sesuaikan dengan format response controller (biasanya res.data.data atau res.data)
+        const dataResult = res.data?.data || res.data || [];
+        setCourses(Array.isArray(dataResult) ? dataResult : []);
       } catch (error) {
         console.error("Failed to fetch courses:", error);
+        setCourses([]); // Jaga-jaga agar tidak error .filter
       } finally {
         setLoading(false);
       }
@@ -30,7 +33,7 @@ export default function CoursesPage() {
   }, []);
 
   const filteredCourses = courses.filter((course) =>
-    course.title.toLowerCase().includes(search.toLowerCase())
+    course.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -39,7 +42,7 @@ export default function CoursesPage() {
         <div className="mt-3 mb-3">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>              
-              <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase">
+              <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase italic">
                 Course Tersedia
               </h1>
               <p className="text-slate-500 text-sm font-medium">
@@ -66,7 +69,7 @@ export default function CoursesPage() {
           {loading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="bg-slate-900/40 border border-slate-800 rounded-3xl h-80 animate-pulse" />
+                <div key={n} className="bg-slate-900/40 border border-slate-800 rounded-[32px] h-80 animate-pulse" />
               ))}
             </div>
           ) : filteredCourses.length > 0 ? (
@@ -86,24 +89,24 @@ export default function CoursesPage() {
                   </div>
 
                   <div className="p-7 flex flex-col flex-grow">
-                    <h2 className="font-bold text-xl text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors tracking-tight">
+                    <h2 className="font-bold text-xl text-white mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors tracking-tight uppercase italic">
                       {course.title}
                     </h2>
 
-                    <div className="flex items-center gap-2 text-slate-500 text-xs font-medium mb-8">
-                      <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center">
-                        <User size={10} className="text-slate-400" />
+                    <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest mb-8">
+                      <div className="w-5 h-5 rounded-lg bg-slate-800 flex items-center justify-center">
+                        <User size={10} className="text-blue-500" />
                       </div>
-                      <span>{course.instructor}</span>
+                      <span>{course.instructor || "Administrator"}</span>
                     </div>
 
                     <div className="mt-auto">
                       <Link
                         href={`/student/courses/${course.id}`}
-                        className="flex items-center justify-center gap-2 w-full bg-slate-800/40 hover:bg-blue-600 text-white py-4 rounded-2xl font-bold transition-all group/btn border border-slate-700/50 hover:border-blue-500 shadow-lg"
+                        className="flex items-center justify-center gap-2 w-full bg-slate-800/40 hover:bg-blue-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all group/btn border border-slate-700/50 hover:border-blue-500 shadow-lg"
                       >
                         Mulai Belajar
-                        <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                        <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
                       </Link>
                     </div>
                   </div>
@@ -111,9 +114,9 @@ export default function CoursesPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-32 border-2 border-dashed border-slate-900 rounded-[40px]">
+            <div className="text-center py-32 border-2 border-dashed border-slate-900 rounded-[40px] opacity-40">
               <BookOpen className="mx-auto text-slate-800 mb-4" size={64} />
-              <p className="text-slate-600 font-medium tracking-wide">Materi tidak ditemukan.</p>
+              <p className="text-slate-600 font-black uppercase tracking-widest text-xs">Materi tidak ditemukan.</p>
             </div>
           )}
         </div>
