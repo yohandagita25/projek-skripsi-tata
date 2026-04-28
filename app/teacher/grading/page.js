@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-// ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
+// ✅ SINKRONISASI: Menggunakan instance api (Axios) agar token auth otomatis terkirim
 import { api } from "@/lib/api";
 import { Star, BookOpen, ChevronRight, Loader2, GraduationCap } from "lucide-react";
 
@@ -11,42 +11,46 @@ export default function GradingDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchCoursesForGrading = async () => {
       try {
-        // ✅ PERBAIKAN: Gunakan api.get (Otomatis membawa cookie online)
-        const res = await api.get("/teacher/dashboard-stats");
+        setLoading(true);
+        // ✅ PERBAIKAN RUTE: Gunakan /api/teacher/dashboard-stats
+        // Rute ini di backend sekarang me-return objek stats yang berisi courseList
+        const res = await api.get("/api/teacher/dashboard-stats");
         
-        // Axios meletakkan hasil data di properti .data
-        const data = res.data;
+        // Unwrapping data: Axios (res.data) -> Backend Wrap (res.data.courseList)
+        // Kita sesuaikan dengan teacherController: res.json({ status: "success", ..., courseList: [...] })
+        const dataResult = res.data?.courseList || [];
         
-        // Menggunakan courseList yang sudah Anda buat di controller
-        setCourses(data.courseList || []);
+        setCourses(Array.isArray(dataResult) ? dataResult : []);
       } catch (err) {
-        console.error("Gagal memuat kursus:", err);
+        console.error("Gagal memuat kursus untuk penilaian:", err);
+        setCourses([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchCourses();
+    
+    fetchCoursesForGrading();
   }, []);
 
   if (loading) return (
     <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
       <Loader2 className="animate-spin mb-4" size={40} />
-      <p className="uppercase tracking-widest text-xs font-black">Memuat Daftar Kursus...</p>
+      <p className="uppercase tracking-[0.3em] text-[10px] font-black italic opacity-50">Mengakses Database Pelatihan...</p>
     </div>
   );
 
   return (
-    <div className="p-2 bg-slate-950 min-h-screen text-white">
+    <div className="p-2 bg-slate-950 min-h-screen text-white font-sans">
       <header className="mb-12">
         <div className="flex items-center gap-4 mb-2">
           <div className="bg-yellow-500/10 p-3 rounded-2xl border border-yellow-500/20">
             <Star className="text-yellow-500" size={28} />
           </div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter">Grading Center</h1>
+          <h1 className="text-4xl font-black uppercase tracking-tighter italic">Grading Center</h1>
         </div>
-        <p className="text-slate-500 mt-2">Pilih kursus untuk mulai melakukan penilaian tugas siswa.</p>
+        <p className="text-slate-500 mt-2">Pilih kursus untuk mulai melakukan penilaian tugas mandiri siswa.</p>
       </header>
 
       {/* GRID KURSUS */}
@@ -62,28 +66,30 @@ export default function GradingDashboard() {
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-all rounded-full"></div>
 
               <div className="relative z-10">
-                <div className="mb-6 bg-slate-800 w-14 h-14 rounded-2xl flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <div className="mb-6 bg-slate-800 w-14 h-14 rounded-2xl flex items-center justify-center text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-lg">
                   <BookOpen size={28} />
                 </div>
                 
-                <h3 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-blue-400 transition-colors">
+                <h3 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-blue-400 transition-colors uppercase tracking-tight">
                   {course.title}
                 </h3>
 
                 <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800/50">
-                  <div className="flex items-center gap-2 text-slate-500 text-xs font-black uppercase tracking-widest">
+                  <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
                     <GraduationCap size={16} />
                     <span>Buka Penilaian</span>
                   </div>
-                  <ChevronRight size={20} className="text-slate-600 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                  <div className="bg-slate-800 p-2 rounded-full group-hover:bg-blue-500 transition-all">
+                    <ChevronRight size={18} className="text-white group-hover:translate-x-0.5 transition-all" />
+                  </div>
                 </div>
               </div>
             </Link>
           ))
         ) : (
-          <div className="col-span-full py-20 bg-slate-900/20 border-2 border-dashed border-slate-800 rounded-[40px] flex flex-col items-center justify-center opacity-50">
+          <div className="col-span-full py-20 bg-slate-900/10 border-2 border-dashed border-slate-900 rounded-[40px] flex flex-col items-center justify-center opacity-40">
             <BookOpen size={48} className="mb-4 text-slate-700" />
-            <p className="italic text-slate-500">Belum ada kursus yang tersedia.</p>
+            <p className="font-black uppercase tracking-widest text-xs text-slate-600">Belum ada kursus yang dibuat.</p>
           </div>
         )}
       </div>
