@@ -72,6 +72,7 @@ export default function LandingPage() {
           Featured Courses
         </h2>        
         {/* PERUBAHAN: Menggunakan flex dan justify-center */}
+        <Link href="/login">
         <div className="flex flex-wrap justify-center gap-8 w-full max-w-6xl mx-auto">          
           <div className="bg-slate-900 p-6 rounded-xl hover:scale-105 transition hover:border border-blue-500 w-full max-w-[350px]">
             <h3 className="text-xl font-bold mt-4">
@@ -80,13 +81,12 @@ export default function LandingPage() {
             <p className="text-slate-400 mt-2">
               Pelajari sintaks bahasa C untuk logika percabangan.
             </p>
-            <Link href="/login">
             <button className="mt-4 text-blue-400 font-semibold">
               View Module →
             </button>
-            </Link>
           </div>
         </div>
+        </Link>
       </section>
 
       {/* LEARNING EXPERIENCE */}
