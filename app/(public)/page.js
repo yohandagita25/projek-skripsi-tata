@@ -80,9 +80,11 @@ export default function LandingPage() {
             <p className="text-slate-400 mt-2">
               Pelajari sintaks bahasa C untuk logika percabangan.
             </p>
+            <Link href="/login">
             <button className="mt-4 text-blue-400 font-semibold">
               View Module →
             </button>
+            </Link>
           </div>
         </div>
       </section>
