@@ -53,7 +53,7 @@ export default function StudentProgressPage() {
     <div className="p-2 space-y-10 bg-slate-950 min-h-screen text-slate-200 selection:bg-blue-500/30">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase italic">Learning Progress</h1>
+          <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase">Learning Progress</h1>
           <p className="text-slate-500 text-sm font-medium">Pilih kursus untuk melihat laporan capaian belajarmu.</p>
         </div>
 
@@ -89,7 +89,7 @@ export default function StudentProgressPage() {
                   <BookOpen className="text-blue-500" size={30} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black tracking-tight uppercase italic text-white">{selectedCourse.course_title}</h2>
+                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">{selectedCourse.course_title}</h2>
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Laporan Belajar Aktif</p>
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function StudentProgressPage() {
                   <div key={idx} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[35px] flex flex-col justify-between hover:border-blue-500/50 transition-all group shadow-lg">
                     <div className="mb-6">
                       {/* ✅ PERBAIKAN: Menggunakan module_title dari database */}
-                      <p className="text-[20px] font-black uppercase tracking-[0.2em] text-blue-500 mb-2 truncate">
+                      <p className="text-[16px] font-black uppercase tracking-tighter text-blue-500 mb-2 truncate">
                         {task.module_title || "MODUL PELATIHAN"}
                       </p>
                       <h3 className="font-bold text-slate-200 text-lg leading-tight group-hover:text-white transition-colors uppercase italic">
