@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, BookOpen, AlertCircle } from "lucide-react";
 // ✅ IMPORT instance api (Axios) yang sudah membawa baseURL Railway & Credentials
@@ -8,21 +8,23 @@ import { api } from "@/lib/api";
 
 export default function CourseRedirect() {
   const router = useRouter();
-  const params = useParams();
+  const rawParams = useParams(); // Mengambil params mentah
   const [error, setError] = useState(false);
 
   useEffect(() => {
     const goToFirstMateri = async () => {
       try {
-        // ✅ PERBAIKAN: Gunakan rute yang benar /api/courses/courses-full
-        // Prefix /api wajib ada agar tidak bentrok dengan rute frontend Next.js
+        // Pastikan params sudah tersedia sebelum eksekusi
+        if (!rawParams || !rawParams.id) return;
+
+        // ✅ SINKRONISASI: Gunakan rute yang benar /api/courses/courses-full
         const res = await api.get("/api/courses/courses-full");
         
         // Unwrapping data: Axios (res.data) -> Backend Wrap (res.data.data atau res.data)
         const allCourses = res.data?.data || res.data || [];
         
         // Cari course yang spesifik berdasarkan ID dari URL
-        const currentCourse = allCourses.find(c => String(c.id) === String(params.id));
+        const currentCourse = allCourses.find(c => String(c.id) === String(rawParams.id));
 
         // Validasi: Apakah kursus ditemukan dan punya modul?
         if (!currentCourse || !currentCourse.modules || currentCourse.modules.length === 0) {
@@ -41,7 +43,7 @@ export default function CourseRedirect() {
 
         if (firstMateriId) {
           // Redirect ke halaman detail materi pertama
-          router.push(`/student/courses/${params.id}/materi/${firstMateriId}`);
+          router.push(`/student/courses/${rawParams.id}/materi/${firstMateriId}`);
         } else {
           setError(true);
         }
@@ -51,10 +53,8 @@ export default function CourseRedirect() {
       }
     };
 
-    if (params?.id) {
-      goToFirstMateri();
-    }
-  }, [params, router]);
+    goToFirstMateri();
+  }, [rawParams, router]);
 
   // UI ERROR (Tidak Berubah)
   if (error) {

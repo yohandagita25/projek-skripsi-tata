@@ -15,8 +15,6 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        // ✅ PERBAIKAN: Gunakan instance api.get
-        // Tidak perlu menulis http://localhost lagi karena sudah ada di lib/api.js
         const res = await api.get("/api/courses");
         
         // Sesuaikan dengan format response controller (biasanya res.data.data atau res.data)
