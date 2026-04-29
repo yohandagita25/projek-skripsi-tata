@@ -164,6 +164,18 @@ export default function MateriPage() {
     } else { setCanGoNext(isSubmitted); }
   }, [timeLeft, materi, isSubmitted]);
 
+  useEffect(() => {
+    const logActivity = async () => {
+      try {
+        // Panggil rute ini agar siswa tercatat "Aktif" di monitor guru
+        await api.post("/api/student/log-activity");
+      } catch (err) {
+        console.error("Gagal catat aktivitas");
+      }
+    };
+    if (params?.materiId) logActivity();
+  }, [params?.materiId]);
+
   // Flowchart Interaction Handlers
   const onConnect = useCallback((params) => {
     if (isSubmitted) return;
