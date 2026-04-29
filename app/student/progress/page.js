@@ -108,7 +108,7 @@ export default function StudentProgressPage() {
                   <div key={idx} className="bg-slate-950/50 border border-slate-800 p-6 rounded-[35px] flex flex-col justify-between hover:border-blue-500/50 transition-all group shadow-lg">
                     <div className="mb-6">
                       {/* ✅ PERBAIKAN: Menggunakan module_title dari database */}
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 mb-2 truncate">
+                      <p className="text-[20px] font-black uppercase tracking-[0.2em] text-blue-500 mb-2 truncate">
                         {task.module_title || "MODUL PELATIHAN"}
                       </p>
                       <h3 className="font-bold text-slate-200 text-lg leading-tight group-hover:text-white transition-colors uppercase italic">
