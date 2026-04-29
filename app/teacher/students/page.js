@@ -52,7 +52,7 @@ export default function StudentMonitor() {
   return (
     <div className="p-2 bg-slate-950 min-h-screen text-white selection:bg-blue-500/30">
       <header className="mb-10">
-        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 italic">
+        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4">
           <Users className="text-blue-500" size={40} /> Student Management
         </h1>
         <p className="text-slate-500 mt-2 font-medium">Pantau progres belajar dan materi terakhir yang diakses siswa secara real-time.</p>
@@ -83,10 +83,9 @@ export default function StudentMonitor() {
                   {/* KOLOM NAMA */}
                   <td className="p-8">
                     <div className="flex flex-col">
-                      <span className="text-lg font-black text-white group-hover:text-blue-400 transition-colors uppercase italic tracking-tight">
+                      <span className="text-lg font-black text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">
                         {s.name}
                       </span>
-                      <span className="text-xs text-slate-500 font-medium">{s.email}</span>
                     </div>
                   </td>
 
@@ -96,7 +95,7 @@ export default function StudentMonitor() {
                       <div className="bg-blue-500/10 p-2 rounded-xl">
                         <BookOpen size={16} className="text-blue-500" />
                       </div>
-                      <span className="font-black text-sm uppercase italic">
+                      <span className="font-black text-sm uppercase">
                         {s.tasks_sent || 0} <span className="text-[10px] text-slate-600 ml-1">Files</span>
                       </span>
                     </div>
@@ -104,7 +103,7 @@ export default function StudentMonitor() {
 
                   {/* KOLOM SKOR */}
                   <td className="p-8">
-                    <div className="text-2xl font-black text-blue-500 italic tracking-tighter">
+                    <div className="text-2xl font-black text-blue-500 tracking-tighter">
                       {s.avg_score ? Math.round(s.avg_score) : "—"}
                     </div>
                   </td>
@@ -115,7 +114,7 @@ export default function StudentMonitor() {
                         <span className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 shadow-inner">
                         {s.last_activity_date ? "Active Student" : "No Activity"}
                         </span>
-                        <span className="text-[10px] text-slate-600 font-black uppercase tracking-tighter italic">
+                        <span className="text-[10px] text-slate-600 font-black uppercase tracking-tighter">
                             Streak: {s.current_streak || 0} Days 🔥
                         </span>
                     </div>
