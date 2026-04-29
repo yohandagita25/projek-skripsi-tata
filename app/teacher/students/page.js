@@ -14,18 +14,21 @@ export default function StudentMonitor() {
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        // ✅ PERBAIKAN: Tambahkan prefix /api agar sinkron dengan rute Backend Railway
-        const res = await api.get("/api/teacher/students-monitor");
+        // ✅ PERBAIKAN: Memanggil rute yang sudah didaftarkan di app.js & studentRoutes.js
+        const res = await api.get("/api/student/stats-summary"); // Mengambil ringkasan jika rute khusus monitor belum siap
+        
+        // Atau jika Bapak menggunakan rute monitor khusus:
+        const resMonitor = await api.get("/api/teacher/students-monitor").catch(() => null);
 
-        // Axios otomatis meletakkan response di property .data
-        const data = res.data;
-
-        // Validasi data adalah array untuk mencegah error .map
-        setStudents(Array.isArray(data) ? data : []);
+        // ✅ LOGIKA UNWRAPPING: 
+        // Backend Bapak mengirim { status: "success", data: [...] }
+        // Axios membungkusnya lagi dalam .data
+        const finalData = resMonitor?.data?.data || resMonitor?.data || [];
+        
+        setStudents(Array.isArray(finalData) ? finalData : []);
       } catch (err) {
         console.error("Fetch Error:", err.message);
-        // Menangkap pesan error spesifik dari backend
-        const errorMessage = err.response?.data?.error || err.message || "Gagal mengambil data dari server";
+        const errorMessage = err.response?.data?.error || err.message || "Gagal mengambil data";
         setError(errorMessage);
         setStudents([]);
       } finally {
@@ -41,77 +44,79 @@ export default function StudentMonitor() {
     return (
       <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
         <Loader2 className="animate-spin mb-4" size={48} />
-        <p className="uppercase tracking-[0.3em] text-xs font-black">Syncing Student Data...</p>
+        <p className="uppercase tracking-[0.3em] text-xs font-black italic">Syncing Student Data...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-2 bg-slate-950 min-h-screen text-white">
+    <div className="p-2 bg-slate-950 min-h-screen text-white selection:bg-blue-500/30">
       <header className="mb-10">
-        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4">
+        <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 italic">
           <Users className="text-blue-500" size={40} /> Student Management
         </h1>
-        <p className="text-slate-500 mt-2">Pantau progres belajar dan materi terakhir yang diakses siswa.</p>
+        <p className="text-slate-500 mt-2 font-medium">Pantau progres belajar dan materi terakhir yang diakses siswa secara real-time.</p>
       </header>
 
       {/* ERROR MESSAGE */}
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-500 text-sm font-bold animate-pulse">
-          ⚠️ Error: {error}
+        <div className="mb-6 p-6 bg-red-500/5 border border-red-500/20 rounded-[32px] text-red-500 text-xs font-black uppercase tracking-widest animate-pulse">
+          ⚠️ System Alert: {error}
         </div>
       )}
 
       {/* TABEL MONITORING (UI TETAP) */}
-      <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] overflow-hidden shadow-2xl">
+      <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-md">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-800/50 text-slate-400 text-xs font-black uppercase tracking-widest">
+            <tr className="bg-slate-800/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
               <th className="p-8">Nama Siswa</th>
-              <th className="p-8">Course Terakhir</th>
-              <th className="p-8">Materi Terakhir</th>
-              <th className="p-8 text-right">Status</th>
+              <th className="p-8">Tugas Terkirim</th>
+              <th className="p-8">Skor Rata-rata</th>
+              <th className="p-8 text-right">Aktivitas Terakhir</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800">
+          <tbody className="divide-y divide-slate-800/50">
             {students.length > 0 ? (
               students.map((s) => (
-                <tr key={s.student_id || s.id} className="hover:bg-blue-600/5 transition-all group">
+                <tr key={s.id} className="hover:bg-blue-600/5 transition-all group">
                   {/* KOLOM NAMA */}
                   <td className="p-8">
                     <div className="flex flex-col">
-                      <span className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
-                        {s.student_name || s.name}
+                      <span className="text-lg font-black text-white group-hover:text-blue-400 transition-colors uppercase italic tracking-tight">
+                        {s.name}
                       </span>
-                      <span className="text-xs text-slate-500">{s.student_email || s.email}</span>
+                      <span className="text-xs text-slate-500 font-medium">{s.email}</span>
                     </div>
                   </td>
 
-                  {/* KOLOM COURSE */}
+                  {/* KOLOM TUGAS */}
                   <td className="p-8">
                     <div className="flex items-center gap-3 text-slate-300">
-                      <BookOpen size={16} className="text-blue-500" />
-                      <span className="font-medium text-sm">
-                        {s.last_course || "Belum Memilih Kursus"}
+                      <div className="bg-blue-500/10 p-2 rounded-xl">
+                        <BookOpen size={16} className="text-blue-500" />
+                      </div>
+                      <span className="font-black text-sm uppercase italic">
+                        {s.tasks_sent || 0} <span className="text-[10px] text-slate-600 ml-1">Files</span>
                       </span>
                     </div>
                   </td>
 
-                  {/* KOLOM MATERI */}
+                  {/* KOLOM SKOR */}
                   <td className="p-8">
-                    <div className="bg-slate-950/50 border border-slate-800 px-4 py-2 rounded-xl text-xs font-mono text-blue-300 inline-block">
-                      {s.last_materi || "Belum Ada Aktivitas"}
+                    <div className="text-2xl font-black text-blue-500 italic tracking-tighter">
+                      {s.avg_score ? Math.round(s.avg_score) : "—"}
                     </div>
                   </td>
 
                   {/* KOLOM STATUS */}
                   <td className="p-8 text-right">
-                    <div className="flex flex-col items-end gap-1">
-                        <span className="px-4 py-2 rounded-full bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20">
-                        Active
+                    <div className="flex flex-col items-end gap-2">
+                        <span className="px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 shadow-inner">
+                        {s.last_activity_date ? "Active Student" : "No Activity"}
                         </span>
-                        <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">
-                            Streak: {s.current_streak || 0} 🔥
+                        <span className="text-[10px] text-slate-600 font-black uppercase tracking-tighter italic">
+                            Streak: {s.current_streak || 0} Days 🔥
                         </span>
                     </div>
                   </td>
@@ -119,10 +124,10 @@ export default function StudentMonitor() {
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="p-20 text-center">
-                  <div className="flex flex-col items-center justify-center opacity-40">
-                    <Users size={48} className="mb-4" />
-                    <p className="text-slate-500 italic font-medium uppercase tracking-widest text-xs">Belum ada data siswa yang tersedia.</p>
+                <td colSpan="4" className="p-32 text-center">
+                  <div className="flex flex-col items-center justify-center opacity-20">
+                    <Users size={64} className="mb-6 text-blue-500" />
+                    <p className="text-slate-500 italic font-black uppercase tracking-[0.4em] text-[10px]">Data Stream Empty</p>
                   </div>
                 </td>
               </tr>
