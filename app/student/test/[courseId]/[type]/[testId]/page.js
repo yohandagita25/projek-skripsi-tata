@@ -6,7 +6,7 @@ import {
   Loader2, Send, ArrowRight, CheckCircle2, 
   ClipboardCheck, ChevronRight, ChevronLeft, Award 
 } from "lucide-react";
-// ✅ PERBAIKAN: Gunakan api (huruf kecil) dari lib
+// ✅ SINKRONISASI: Menggunakan instance api (Axios) agar cookie & baseURL online terbawa
 import { api } from "@/lib/api";
 
 export default function TestPage() {
@@ -31,10 +31,10 @@ export default function TestPage() {
     const fetchTestData = async () => {
       setLoading(true); 
       try {
-        // ✅ PERBAIKAN: Gunakan api.get
-        const res = await api.get(`/student/test-data/${params.testId}`);
-        const data = res.data; // Axios menggunakan .data
-        setQuestions(data);
+        // ✅ PERBAIKAN: Gunakan rute /api/student/...
+        const res = await api.get(`/api/student/test-data/${params.testId}`);
+        const data = res.data; 
+        setQuestions(Array.isArray(data) ? data : []);
   
         const savedProgress = localStorage.getItem(STORAGE_KEY);
         if (savedProgress) {
@@ -73,8 +73,8 @@ export default function TestPage() {
 
     setIsSubmitting(true);
     try {
-      // ✅ PERBAIKAN: Gunakan api.post
-      const res = await api.post("/student/submit-test", {
+      // ✅ PERBAIKAN: Gunakan api.post menuju rute yang benar
+      const res = await api.post("/api/student/submit-test", {
         test_id: params.testId,
         course_id: params.courseId,
         test_type: params.type,
@@ -88,7 +88,7 @@ export default function TestPage() {
         alert("Gagal mengirim jawaban. Silakan coba lagi.");
       }
     } catch (err) {
-      alert("Koneksi bermasalah. Pastikan internet Anda stabil.");
+      alert("Gagal mengirim hasil tes. Periksa koneksi Anda.");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,10 +101,12 @@ export default function TestPage() {
     }
     setLoading(true);
     try {
-      // ✅ PERBAIKAN: Gunakan api.get
-      const res = await api.get("/courses-full");
-      const allData = res.data;
-      const currentCourse = allData.find(c => c.id === Number(params.courseId));
+      // ✅ PERBAIKAN: Gunakan prefix /api/courses/courses-full
+      const res = await api.get("/api/courses/courses-full");
+      const allData = res.data?.data || res.data || [];
+      const currentCourse = allData.find(c => Number(c.id) === Number(params.courseId));
+      
+      // Ambil materi pertama dari modul pertama
       const firstMateriId = currentCourse?.modules?.[0]?.materi?.[0]?.id;
 
       if (firstMateriId) {
@@ -208,7 +210,7 @@ export default function TestPage() {
                     )}
 
                     <div className="grid grid-cols-1 gap-5">
-                      {currentQ.options.map((opt, idx) => {
+                      {currentQ.options?.map((opt, idx) => {
                         const label = opt.option_label || opt.label;
                         const text = opt.option_text || opt.text;
                         const image = opt.option_image;
