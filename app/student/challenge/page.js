@@ -50,11 +50,10 @@ export default function ChallengePage() {
       {/* Header Halaman */}
       <header className="mb-12">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Initial Challenges</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Challenges</h1>
         </div>
         <p className="text-slate-500 text-sm max-w-xl">
-          Selesaikan <span className="">Challenge awal</span> untuk setiap kursus untuk mengukur sejauh mana pengetahuan dasarmu sebelum memulai pembelajaran.
-        </p>
+          Selesaikan Challenge Awal</p>
       </header>
 
       {/* Grid Challenge */}
