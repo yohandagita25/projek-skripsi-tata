@@ -158,7 +158,7 @@ export default function MateriPage() {
     const hasTask = materi.assignment || materi.has_reflection;
     if (!hasTask) {
       if (timeLeft > 0) {
-        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 100);
         return () => clearTimeout(timer);
       } else { setCanGoNext(true); }
     } else { setCanGoNext(isSubmitted); }
