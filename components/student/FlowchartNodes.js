@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Handle, Position } from 'reactflow';
 
+// Komponen Label yang bisa diedit
 const EditableLabel = ({ label, onChange, placeholder, className }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(label || "");
@@ -9,27 +10,22 @@ const EditableLabel = ({ label, onChange, placeholder, className }) => {
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (typeof onChange === 'function') {
-      onChange(value);
-    }
+    if (typeof onChange === 'function') onChange(value);
   };
 
   if (isEditing) {
     return (
       <textarea
         autoFocus
-        // noproxy: mencegah React Flow menangkap input keyboard sebagai shortcut
         className={`nodrag nowheel bg-transparent outline-none resize-none text-center w-full p-0 m-0 leading-tight focus:ring-0 border-none ${className}`}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={(e) => {
-          // Jika tekan Enter (tanpa Shift), maka simpan (Blur)
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleBlur();
           }
-          // Mencegah penghapusan node saat menekan Backspace/Delete di dalam textarea
           e.stopPropagation();
         }}
         rows={1}
@@ -40,7 +36,7 @@ const EditableLabel = ({ label, onChange, placeholder, className }) => {
   return (
     <div 
       onDoubleClick={(e) => {
-        e.stopPropagation(); // Mencegah trigger event double click pada canvas
+        e.stopPropagation();
         setIsEditing(true);
       }} 
       className={`cursor-text select-none min-w-[20px] min-h-[1em] flex items-center justify-center text-center w-full h-full leading-tight ${className}`}
@@ -50,78 +46,87 @@ const EditableLabel = ({ label, onChange, placeholder, className }) => {
   );
 };
 
-// Start Node (Terminal)
+// HELPER: Base Wrapper untuk menangani multi-handle transparan
+const NodeWrapper = ({ children, colorClass }) => (
+  <div className="relative group">
+    {/* Handle Transparan di 4 Sisi (Memungkinkan koneksi dari mana saja) */}
+    <Handle type="source" position={Position.Top} id="t" className={`!opacity-0 group-hover:!opacity-100 !w-2 !h-2 !bg-${colorClass}`} />
+    <Handle type="source" position={Position.Bottom} id="b" className={`!opacity-0 group-hover:!opacity-100 !w-2 !h-2 !bg-${colorClass}`} />
+    <Handle type="source" position={Position.Left} id="l" className={`!opacity-0 group-hover:!opacity-100 !w-2 !h-2 !bg-${colorClass}`} />
+    <Handle type="source" position={Position.Right} id="r" className={`!opacity-0 group-hover:!opacity-100 !w-2 !h-2 !bg-${colorClass}`} />
+    
+    {/* Duplikasi sebagai Target (Agar bisa menerima input dari mana saja) */}
+    <Handle type="target" position={Position.Top} id="t_t" className="!opacity-0" />
+    <Handle type="target" position={Position.Bottom} id="b_t" className="!opacity-0" />
+    <Handle type="target" position={Position.Left} id="l_t" className="!opacity-0" />
+    <Handle type="target" position={Position.Right} id="r_t" className="!opacity-0" />
+    
+    {children}
+  </div>
+);
+
+// 1. Start/End Node (Oval/Capsule)
 export const StartNode = ({ data }) => (
-  <div className="px-6 py-2 rounded-full border-2 border-green-500 bg-slate-900 text-white shadow-lg shadow-green-500/20 min-w-[120px] flex items-center justify-center">
-    <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-green-500" />
-    <EditableLabel 
-      label={data.label} 
-      onChange={(val) => data?.onChange?.(val)} 
-      className="text-xs font-bold"
-      placeholder="START/END"
-    />
-    <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-green-500" />
-  </div>
+  <NodeWrapper colorClass="green-400">
+    <div className="px-6 py-2 rounded-full border-2 border-green-500 bg-slate-900/90 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.3)] min-w-[120px]">
+      <EditableLabel 
+        label={data.label} 
+        onChange={(val) => data?.onChange?.(val)} 
+        className="text-xs font-bold uppercase tracking-wider"
+        placeholder="START/END"
+      />
+    </div>
+  </NodeWrapper>
 );
 
-// Process Node
+// 2. Process Node (Rectangle)
 export const ProcessNode = ({ data }) => (
-  <div className="px-4 py-3 border-2 border-blue-500 bg-slate-900 text-white shadow-lg shadow-blue-500/20 min-w-[120px] flex items-center justify-center">
-    <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-blue-500" />
-    <EditableLabel 
-      label={data.label} 
-      onChange={(val) => data?.onChange?.(val)} 
-      className="text-xs font-bold"
-      placeholder="Proses"
-    />
-    <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-blue-500" />
-  </div>
+  <NodeWrapper colorClass="blue-400">
+    <div className="px-4 py-4 border-2 border-blue-500 bg-slate-900/90 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] min-w-[140px]">
+      <EditableLabel 
+        label={data.label} 
+        onChange={(val) => data?.onChange?.(val)} 
+        className="text-xs font-bold uppercase"
+        placeholder="PROSES"
+      />
+    </div>
+  </NodeWrapper>
 );
 
-// Decision Node
+// 3. Decision Node (Diamond)
 export const DecisionNode = ({ data }) => (
-  <div className="relative w-32 h-32 flex items-center justify-center">
-    {/* Menggunakan clip-path atau transform agar border benar-benar belah ketupat */}
-    <div className="absolute inset-2 border-2 border-yellow-500 bg-slate-900 rotate-45 shadow-lg shadow-yellow-500/20"></div>
-    <Handle type="target" position={Position.Top} className="!top-0 w-2 h-2 !bg-yellow-500 z-10" />
-    <div className="relative z-10 w-full px-6 text-center">
-      <EditableLabel 
-        label={data.label} 
-        onChange={(val) => data?.onChange?.(val)} 
-        className="text-[10px] font-bold leading-tight"
-        placeholder="Kondisi?"
-      />
+  <NodeWrapper colorClass="yellow-400">
+    <div className="relative w-28 h-28 flex items-center justify-center">
+      <div className="absolute inset-0 border-2 border-yellow-500 bg-slate-900/90 rotate-45 shadow-[0_0_15px_rgba(234,179,8,0.3)]"></div>
+      <div className="relative z-10 p-4 text-center">
+        <EditableLabel 
+          label={data.label} 
+          onChange={(val) => data?.onChange?.(val)} 
+          className="text-[10px] font-bold text-yellow-500 leading-tight"
+          placeholder="KONDISI?"
+        />
+      </div>
     </div>
-    <Handle type="source" position={Position.Bottom} id="yes" className="!bottom-0 w-2 h-2 !bg-green-500 z-10" />
-    <Handle type="source" position={Position.Right} id="no" className="!right-0 w-2 h-2 !bg-red-500 z-10" />
-  </div>
+  </NodeWrapper>
 );
 
-// Input Node
+// 4. Input/Output Node (Parallelogram) - FIX BACKGROUND PUTIH
 export const InputOutputNode = ({ data }) => (
-  <div className="px-8 py-3 border-2 border-purple-500 bg-slate-900 text-white shadow-lg shadow-purple-500/20 flex items-center justify-center" 
-       style={{ transform: 'skewX(-15deg)' }}>
-    <div style={{ transform: 'skewX(15deg)' }} className="w-full">
-      <Handle type="target" position={Position.Top} className="w-2 h-2 !bg-purple-500" />
-      <EditableLabel 
-        label={data.label} 
-        onChange={(val) => data?.onChange?.(val)} 
-        className="text-xs font-bold"
-        placeholder="Input/Output"
-      />
-      <Handle type="source" position={Position.Bottom} className="w-2 h-2 !bg-purple-500" />
+  <NodeWrapper colorClass="purple-400">
+    {/* Container luar dibuat transparan agar tidak ada box putih */}
+    <div className="relative py-3 px-8 bg-transparent overflow-visible">
+      {/* Background jajaran genjang menggunakan pseudo-element atau div terpisah */}
+      <div className="absolute inset-0 border-2 border-purple-500 bg-slate-900/90 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+           style={{ transform: 'skewX(-20deg)' }}></div>
+      
+      <div className="relative z-10">
+        <EditableLabel 
+          label={data.label} 
+          onChange={(val) => data?.onChange?.(val)} 
+          className="text-xs font-bold text-purple-400"
+          placeholder="INPUT/OUTPUT"
+        />
+      </div>
     </div>
-  </div>
-);
-
-// Text Node
-export const TextNode = ({ data }) => (
-  <div className="p-2 bg-transparent text-slate-300 min-w-[80px]">
-    <EditableLabel 
-      label={data.label} 
-      onChange={(val) => data?.onChange?.(val)} 
-      className="text-sm font-medium"
-      placeholder="Ketik teks..."
-    />
-  </div>
+  </NodeWrapper>
 );
