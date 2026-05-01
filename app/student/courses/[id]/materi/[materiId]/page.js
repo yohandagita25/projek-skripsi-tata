@@ -331,7 +331,7 @@ export default function MateriPage() {
             {showWorkspace && materi?.assignment && (
               <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-[800px] shadow-2xl relative">
                 {isSubmitted && (
-                  <div className="absolute top-16 inset-0 bg-slate-950/20 backdrop-blur-[1px] z-50 flex items-center justify-center pointer-events-none">
+                  <div className="absolute top-16 inset-0 bg-slate-950/20 z-50 flex items-center justify-center pointer-events-none">
                     <div className="bg-slate-900/90 border border-slate-700 px-6 py-3 rounded-2xl flex items-center gap-3">
                       <Lock className="text-orange-500" size={20} />
                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">ReadOnly Mode - Task Submitted</span>
