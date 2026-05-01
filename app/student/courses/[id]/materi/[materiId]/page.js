@@ -4,9 +4,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { 
-  PlayCircle, FileText, ArrowRight, ArrowLeft, 
-  Loader2, X, BrainCircuit, Save, Code as CodeIcon, Terminal, Play,
-  MessageSquareQuote, ChevronDown, ChevronRight, Lock
+  FileText, ArrowRight, ArrowLeft, 
+  Loader2, X, BrainCircuit, Save, Code as CodeIcon,
+  MessageSquareQuote, ChevronDown, ChevronRight, Lock, Terminal
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; 
@@ -55,6 +55,9 @@ export default function MateriPage() {
   const [isCompiling, setIsCompiling] = useState(false);
   const [userReflection, setUserReflection] = useState("");
   const [runCount, setRunCount] = useState(0);
+  
+  // ✅ STATE BARU UNTUK INPUT SCANF
+  const [userInput, setUserInput] = useState("");
 
   const toggleModule = (modId) => {
     setOpenModules(prev => ({ ...prev, [modId]: !prev[modId] }));
@@ -64,7 +67,6 @@ export default function MateriPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. CEK AKSES & PRE-TEST
         const accessRes = await api.get(`/api/student/course-access/${params.id}`);
         const accessStatus = accessRes.data;
 
@@ -76,7 +78,6 @@ export default function MateriPage() {
           return;
         }
 
-        // 2. AMBIL DATA KURSUS
         const allDataRes = await getFullCourses();
         const allData = allDataRes.data || allDataRes; 
         const currentCourse = allData.find(c => Number(c.id) === Number(params.id));
@@ -94,19 +95,18 @@ export default function MateriPage() {
           const currentMod = currentCourse.modules.find(mod => mod.materi?.some(mat => mat.id === currentMateri.id));
           if (currentMod) setOpenModules(prev => ({ ...prev, [currentMod.id]: true }));
 
-          // Reset States
           setIsSubmitted(false);
           setShowWorkspace(false);
           setCanGoNext(false);
           setTimeLeft(30);
           setUserReflection("");
           setRunCount(0);
+          setUserInput(""); // Reset inputan
           setUserCode(currentMateri.assignment?.starter_code || "// Tulis kodemu di sini...");
           setNodes([]);
           setEdges([]);
           setTerminalOutput("");
 
-          // 3. RESTORE JAWABAN (JIKA ADA)
           try {
             const subRes = await api.get(`/api/student/submission/${params.materiId}`);
             const subData = subRes.data;
@@ -130,7 +130,6 @@ export default function MateriPage() {
                   data: {
                     ...node.data,
                     onChange: (newLabel) => {
-                      // Lock if submitted
                       setNodes((nds) =>
                         nds.map((n) => (n.id === node.id ? { ...n, data: { ...n.data, label: newLabel } } : n))
                       );
@@ -152,13 +151,12 @@ export default function MateriPage() {
     if (params?.id && params?.materiId) fetchData();
   }, [params.id, params.materiId]);
 
-  // Timer logic for non-task pages
   useEffect(() => {
     if (!materi) return;
     const hasTask = materi.assignment || materi.has_reflection;
     if (!hasTask) {
       if (timeLeft > 0) {
-        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 15000);
+        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
         return () => clearTimeout(timer);
       } else { setCanGoNext(true); }
     } else { setCanGoNext(isSubmitted); }
@@ -167,16 +165,12 @@ export default function MateriPage() {
   useEffect(() => {
     const logActivity = async () => {
       try {
-        // Panggil rute ini agar siswa tercatat "Aktif" di monitor guru
         await api.post("/api/student/log-activity");
-      } catch (err) {
-        console.error("Gagal catat aktivitas");
-      }
+      } catch (err) { console.error("Gagal catat aktivitas"); }
     };
     if (params?.materiId) logActivity();
   }, [params?.materiId]);
 
-  // Flowchart Interaction Handlers
   const onConnect = useCallback((params) => {
     if (isSubmitted) return;
     setEdges((eds) => addEdge(params, eds));
@@ -210,16 +204,25 @@ export default function MateriPage() {
     setNodes((nds) => nds.concat(newNode));
   }, [reactFlowInstance, setNodes, isSubmitted]);
 
+  // ✅ HANDLER RUN CODE YANG DIPERBAIKI (MENGIRIM STDIN)
   const handleRunCode = async () => {
     if (isCompiling || isSubmitted) return;
     setIsCompiling(true);
     setRunCount(prev => prev + 1);
     setTerminalOutput("System: Compiling... ⏳");
     try {
-      const res = await api.post("/api/student/run-code", { materi_id: materi.id, code: userCode });
+      const res = await api.post("/api/student/run-code", { 
+        materi_id: materi.id, 
+        code: userCode,
+        stdin: userInput // 👈 SINKRONISASI: Kirim inputan siswa ke backend
+      });
       const data = res.data;
       setTerminalOutput(data.stderr ? `❌ Error:\n${data.stderr}` : `✅ Output:\n${data.stdout}`);
-    } catch (err) { setTerminalOutput("❌ Connection Error"); } finally { setIsCompiling(false); }
+    } catch (err) { 
+      setTerminalOutput("❌ Connection Error"); 
+    } finally { 
+      setIsCompiling(false); 
+    }
   };
 
   const handleSendAssignment = async () => {
@@ -260,7 +263,7 @@ export default function MateriPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-80 bg-slate-900/50 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto p-6 space-y-4">
+        <aside className="w-80 bg-slate-900/50 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto p-6 space-y-4 font-black italic">
           {modules.map((module, mIdx) => (
             <div key={module.id} className="space-y-2">
               <button onClick={() => toggleModule(module.id)} className="w-full flex items-center justify-between p-4 rounded-xl bg-slate-800/40 hover:bg-slate-800 transition-all border border-slate-700/50">
@@ -303,7 +306,7 @@ export default function MateriPage() {
                 <h5 className="text-white font-bold text-2xl mb-6">{materi.reflection_question}</h5>
                 <textarea className="w-full bg-slate-950 border border-slate-800 p-8 rounded-[32px] text-white text-lg h-40 outline-none" value={userReflection} onChange={(e) => setUserReflection(e.target.value)} placeholder="Tulis responmu..." />
                 <div className="mt-8 flex justify-end">
-                  <button onClick={handleSendAssignment} className="bg-purple-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                  <button onClick={handleSendAssignment} className="bg-purple-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95">
                     <Save size={18} /> {isSubmitted ? "Perbarui" : "Kirim"}
                   </button>
                 </div>
@@ -318,7 +321,7 @@ export default function MateriPage() {
                 <div className="flex-1">
                   <h4 className="text-white font-black text-3xl uppercase tracking-tighter mb-2 italic">Assignment: {materi.assignment.type}</h4>
                   <p className="text-slate-400 text-lg mb-8 italic">"{materi.assignment.instruction}"</p>
-                  <button onClick={() => setShowWorkspace(!showWorkspace)} className="px-10 py-4 bg-blue-600 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl">
+                  <button onClick={() => setShowWorkspace(!showWorkspace)} className="px-10 py-4 bg-blue-600 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-xl transition-all active:scale-95">
                     {showWorkspace ? "Tutup Workspace" : "Buka Workspace"}
                   </button>
                 </div>
@@ -366,12 +369,41 @@ export default function MateriPage() {
                       <div className="flex-1 border-r border-slate-800">
                         <Editor height="100%" defaultLanguage="cpp" theme="vs-dark" value={userCode} onChange={(v) => setUserCode(v)} options={{ fontSize: 16, minimap: { enabled: false }, readOnly: isSubmitted }} />
                       </div>
-                      <div className="w-96 bg-black p-8 text-sm text-green-400 italic custom-scrollbar overflow-y-auto">
-                        <div className="mb-4 flex flex-col gap-1 border-b border-white/5 pb-4">
+                      
+                      {/* ✅ TERMINAL & INPUT AREA (DIPERBAIKI) */}
+                      <div className="w-96 bg-black p-8 text-sm text-green-400 italic flex flex-col gap-6 custom-scrollbar overflow-y-auto">
+                        
+                        {/* TOTAL COMPILE */}
+                        <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
                             <span className="text-[9px] font-black uppercase text-blue-500 tracking-widest">Total Compile</span>
                             <span className="text-xl text-white font-black">{runCount} <span className="text-[10px] text-slate-600">Times</span></span>
                         </div>
-                        {terminalOutput || "> Console Ready..."}
+
+                        {/* ✅ STANDARD INPUT (STDIN) AREA */}
+                        {!isSubmitted && (
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black uppercase text-orange-500 tracking-widest flex items-center gap-2">
+                              <Terminal size={12} /> Standard Input (stdin)
+                            </label>
+                            <textarea 
+                              value={userInput}
+                              onChange={(e) => setUserInput(e.target.value)}
+                              placeholder="Masukkan angka input di sini (misal: 1)"
+                              className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white font-mono text-xs focus:outline-none focus:border-blue-500 transition-all"
+                              rows={3}
+                            />
+                            <p className="text-[8px] text-slate-500 italic">*Ketik inputan sebelum menekan tombol RUN</p>
+                          </div>
+                        )}
+
+                        {/* OUTPUT AREA */}
+                        <div className="flex-1 pt-4 border-t border-white/5">
+                            <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-4">Console Output</span>
+                            <pre className="whitespace-pre-wrap font-mono leading-relaxed">
+                              {terminalOutput || "> Console Ready..."}
+                            </pre>
+                        </div>
+
                       </div>
                     </div>
                   )}
