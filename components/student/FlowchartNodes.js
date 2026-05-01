@@ -130,3 +130,14 @@ export const InputOutputNode = ({ data }) => (
     </div>
   </NodeWrapper>
 );
+
+export const TextNode = ({ data }) => (
+  <div className="p-2 bg-transparent text-slate-300 min-w-[80px]">
+    <EditableLabel 
+      label={data.label} 
+      onChange={(val) => data?.onChange?.(val)} 
+      className="text-sm font-medium"
+      placeholder="Ketik teks..."
+    />
+  </div>
+);
