@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { 
   FileText, ArrowRight, ArrowLeft, 
@@ -17,20 +17,25 @@ import { getFullCourses } from "@/app/services/courseService";
 import Editor from "@monaco-editor/react";
 import ReactFlow, { ReactFlowProvider, addEdge, useNodesState, useEdgesState, Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Import komponen node baru yang sudah mendukung koneksi dari segala sisi
 import { StartNode, ProcessNode, DecisionNode, InputOutputNode, TextNode } from "@/components/student/FlowchartNodes";
 import FlowchartSidebar from "@/components/student/FlowchartSidebar";
-
-const nodeTypes = { 
-  start: StartNode, 
-  process: ProcessNode, 
-  decision: DecisionNode, 
-  input: InputOutputNode,
-  text: TextNode 
-};
 
 export default function MateriPage() {
   const params = useParams();
   const router = useRouter();
+  
+  // REGISTRASI NODE TYPES
+  // Memoize agar tidak re-render yang tidak perlu
+  const nodeTypes = useMemo(() => ({ 
+    start: StartNode, 
+    process: ProcessNode, 
+    decision: DecisionNode, 
+    input: InputOutputNode,
+    text: TextNode 
+  }), []);
+
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
   const [materi, setMateri] = useState(null);
@@ -55,8 +60,6 @@ export default function MateriPage() {
   const [isCompiling, setIsCompiling] = useState(false);
   const [userReflection, setUserReflection] = useState("");
   const [runCount, setRunCount] = useState(0);
-  
-  // ✅ STATE BARU UNTUK INPUT SCANF
   const [userInput, setUserInput] = useState("");
 
   const toggleModule = (modId) => {
@@ -101,7 +104,7 @@ export default function MateriPage() {
           setTimeLeft(30);
           setUserReflection("");
           setRunCount(0);
-          setUserInput(""); // Reset inputan
+          setUserInput("");
           setUserCode(currentMateri.assignment?.starter_code || "// Tulis kodemu di sini...");
           setNodes([]);
           setEdges([]);
@@ -162,15 +165,6 @@ export default function MateriPage() {
     } else { setCanGoNext(isSubmitted); }
   }, [timeLeft, materi, isSubmitted]);
 
-  useEffect(() => {
-    const logActivity = async () => {
-      try {
-        await api.post("/api/student/log-activity");
-      } catch (err) { console.error("Gagal catat aktivitas"); }
-    };
-    if (params?.materiId) logActivity();
-  }, [params?.materiId]);
-
   const onConnect = useCallback((params) => {
     if (isSubmitted) return;
     setEdges((eds) => addEdge(params, eds));
@@ -204,7 +198,6 @@ export default function MateriPage() {
     setNodes((nds) => nds.concat(newNode));
   }, [reactFlowInstance, setNodes, isSubmitted]);
 
-  // ✅ HANDLER RUN CODE YANG DIPERBAIKI (MENGIRIM STDIN)
   const handleRunCode = async () => {
     if (isCompiling || isSubmitted) return;
     setIsCompiling(true);
@@ -214,7 +207,7 @@ export default function MateriPage() {
       const res = await api.post("/api/student/run-code", { 
         materi_id: materi.id, 
         code: userCode,
-        stdin: userInput // 👈 SINKRONISASI: Kirim inputan siswa ke backend
+        stdin: userInput 
       });
       const data = res.data;
       setTerminalOutput(data.stderr ? `❌ Error:\n${data.stderr}` : `✅ Output:\n${data.stdout}`);
@@ -242,7 +235,6 @@ export default function MateriPage() {
       if (res.status === 200 || res.status === 201) {
         setIsSubmitted(true);
         setCanGoNext(true);
-        await api.post("/api/student/log-activity");
         alert("🎉 Berhasil dikirim!");
       }
     } catch (err) { alert("Gagal mengirim."); }
@@ -263,6 +255,7 @@ export default function MateriPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Navigasi Materi */}
         <aside className="w-80 bg-slate-900/50 border-r border-slate-800 flex flex-col shrink-0 overflow-y-auto p-6 space-y-4 font-black italic">
           {modules.map((module, mIdx) => (
             <div key={module.id} className="space-y-2">
@@ -281,6 +274,7 @@ export default function MateriPage() {
           ))}
         </aside>
 
+        {/* Konten Utama */}
         <main className="flex-1 overflow-y-auto bg-slate-950 flex flex-col relative custom-scrollbar">
           <div className="w-full px-12 py-12 flex-1">
             <h1 className="text-4xl font-black text-white mb-8 tracking-tighter uppercase italic">{materi?.title}</h1>
@@ -297,6 +291,7 @@ export default function MateriPage() {
               </article>
             </div>
 
+            {/* Refleksi */}
             {materi?.has_reflection && (
               <div className="mt-16 p-10 rounded-[40px] bg-purple-600/5 border border-purple-500/20 shadow-2xl relative">
                 <div className="flex items-center gap-3 mb-6">
@@ -313,6 +308,7 @@ export default function MateriPage() {
               </div>
             )}
 
+            {/* Assignment Card */}
             {materi?.assignment && (
               <div className="mt-16 p-10 rounded-[40px] bg-blue-600/5 border border-blue-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-10">
                 <div className={`p-8 rounded-[32px] ${isSubmitted ? "bg-green-500/10 text-green-500" : "bg-blue-500/10 text-blue-400 animate-pulse"}`}>
@@ -328,6 +324,7 @@ export default function MateriPage() {
               </div>
             )}
 
+            {/* WORKSPACE AREA */}
             {showWorkspace && materi?.assignment && (
               <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-[800px] shadow-2xl relative">
                 {isSubmitted && (
@@ -338,6 +335,7 @@ export default function MateriPage() {
                     </div>
                   </div>
                 )}
+                
                 <div className="h-16 bg-slate-800/50 border-b border-slate-700 px-10 flex justify-between items-center z-[51]">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{materi.assignment.type} Editor</span>
                   <div className="flex gap-4">
@@ -355,31 +353,38 @@ export default function MateriPage() {
                         {!isSubmitted && <FlowchartSidebar />}
                         <div className="flex-1 relative">
                           <ReactFlow
-                            nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onInit={setReactFlowInstance} onDrop={onDrop} onDragOver={onDragOver} nodeTypes={nodeTypes}
-                            deleteKeyCode={isSubmitted ? null : ["Backspace", "Delete"]} fitView
+                            nodes={nodes}
+                            edges={edges}
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onConnect={onConnect}
+                            onInit={setReactFlowInstance}
+                            onDrop={onDrop}
+                            onDragOver={onDragOver}
+                            nodeTypes={nodeTypes}
+                            // AKTIFKAN LOOSE CONNECTION Agar bisa nyambung antar source-source
+                            connectionMode="loose" 
+                            deleteKeyCode={isSubmitted ? null : ["Backspace", "Delete"]}
+                            fitView
                           >
                             <Background color="#334155" variant="dots"/>
-                            <Controls/>
+                            <Controls className="!bg-slate-800 !border-slate-700 !fill-white"/>
                           </ReactFlow>
                         </div>
                       </div>
                     </ReactFlowProvider>
                   ) : (
-                    <div className="flex-1 flex overflow-hidden font-mono">
+                    <div className="flex-1 flex overflow-hidden font-mono text-white">
                       <div className="flex-1 border-r border-slate-800">
                         <Editor height="100%" defaultLanguage="cpp" theme="vs-dark" value={userCode} onChange={(v) => setUserCode(v)} options={{ fontSize: 16, minimap: { enabled: false }, readOnly: isSubmitted }} />
                       </div>
                       
-                      {/* ✅ TERMINAL & INPUT AREA (DIPERBAIKI) */}
                       <div className="w-96 bg-black p-8 text-sm text-green-400 italic flex flex-col gap-6 custom-scrollbar overflow-y-auto">
-                        
-                        {/* TOTAL COMPILE */}
                         <div className="flex flex-col gap-1 border-b border-white/5 pb-4">
                             <span className="text-[9px] font-black uppercase text-blue-500 tracking-widest">Total Compile</span>
                             <span className="text-xl text-white font-black">{runCount} <span className="text-[10px] text-slate-600">Times</span></span>
                         </div>
 
-                        {/* ✅ STANDARD INPUT (STDIN) AREA */}
                         {!isSubmitted && (
                           <div className="flex flex-col gap-2">
                             <label className="text-[9px] font-black uppercase text-orange-500 tracking-widest flex items-center gap-2">
@@ -396,14 +401,12 @@ export default function MateriPage() {
                           </div>
                         )}
 
-                        {/* OUTPUT AREA */}
                         <div className="flex-1 pt-4 border-t border-white/5">
                             <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest block mb-4">Console Output</span>
                             <pre className="whitespace-pre-wrap font-mono leading-relaxed">
                               {terminalOutput || "> Console Ready..."}
                             </pre>
                         </div>
-
                       </div>
                     </div>
                   )}
@@ -411,6 +414,7 @@ export default function MateriPage() {
               </div>
             )}
 
+            {/* Footer Navigasi */}
             <div className="mt-32 mb-20 flex justify-between items-center border-t border-slate-900 pt-16">
               {prevMateriId ? <Link href={`/student/courses/${params.id}/materi/${prevMateriId}`} className="text-slate-500 hover:text-white font-black text-xs uppercase tracking-[0.2em] flex items-center gap-3 transition-all"><ArrowLeft size={20} /> Back</Link> : <div/>}
               
