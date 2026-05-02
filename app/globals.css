@@ -46,3 +46,9 @@ body {
     animation: neon-ripple 2s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
 }
+
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
