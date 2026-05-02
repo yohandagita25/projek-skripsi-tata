@@ -96,7 +96,7 @@ export const ProcessNode = ({ data }) => (
 // 3. Decision Node (Diamond)
 export const DecisionNode = ({ data }) => (
   <NodeWrapper colorClass="yellow-400">
-    <div className="flex items-center justify-center p-3">
+    <div className="flex items-center justify-center p-4">
       <div className="relative w-20 h-20 flex items-center justify-center">
         <div className="absolute inset-0 border-2 border-yellow-500 bg-slate-900/90 rotate-45 shadow-[0_0_15px_rgba(234,179,8,0.3)]"></div>
         <div className="relative z-10 p-2 text-center w-full">
