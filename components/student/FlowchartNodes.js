@@ -96,17 +96,8 @@ export const ProcessNode = ({ data }) => (
 // 3. Decision Node (Diamond)
 export const DecisionNode = ({ data }) => (
   <NodeWrapper colorClass="yellow-400">
-    {/* Ukuran utama diubah dari w-28 h-28 menjadi w-20 h-20 */}
-    <div className="relative w-20 h-20 flex items-center justify-center m-2">
-      
-      {/* Background belah ketupat tetap diputar 45 derajat */}
+    <div className="relative w-20 h-20 flex items-center justify-center m-4">
       <div className="absolute inset-0 border-2 border-yellow-500 bg-slate-900/90 rotate-45 shadow-[0_0_15px_rgba(234,179,8,0.3)]"></div>
-      
-      {/* 
-          Bagian Konten:
-          - p-2: Padding dikurangi dari 4 menjadi 2 agar teks punya ruang lebih luas.
-          - text-[9px]: Ukuran font dikurangi sedikit dari 10px agar lebih pas dengan kotak kecil.
-      */}
       <div className="relative z-10 p-2 text-center w-full">
         <EditableLabel 
           label={data.label} 
@@ -122,9 +113,7 @@ export const DecisionNode = ({ data }) => (
 // 4. Input/Output Node (Parallelogram) - FIX BACKGROUND PUTIH
 export const InputOutputNode = ({ data }) => (
   <NodeWrapper colorClass="purple-400">
-    {/* Container luar dibuat transparan agar tidak ada box putih */}
     <div className="relative py-3 px-8 bg-transparent overflow-visible">
-      {/* Background jajaran genjang menggunakan pseudo-element atau div terpisah */}
       <div className="absolute inset-0 border-2 border-purple-500 bg-slate-900/90 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
            style={{ transform: 'skewX(-20deg)' }}></div>
       
