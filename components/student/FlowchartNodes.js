@@ -97,7 +97,7 @@ export const ProcessNode = ({ data }) => (
 export const DecisionNode = ({ data }) => (
   <NodeWrapper colorClass="yellow-400">
     {/* Ukuran utama diubah dari w-28 h-28 menjadi w-20 h-20 */}
-    <div className="relative w-20 h-20 flex items-center justify-center">
+    <div className="relative w-20 h-20 flex items-center justify-center m-2">
       
       {/* Background belah ketupat tetap diputar 45 derajat */}
       <div className="absolute inset-0 border-2 border-yellow-500 bg-slate-900/90 rotate-45 shadow-[0_0_15px_rgba(234,179,8,0.3)]"></div>
