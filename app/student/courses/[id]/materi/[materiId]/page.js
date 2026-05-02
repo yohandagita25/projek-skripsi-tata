@@ -331,7 +331,7 @@ export default function MateriPage() {
                   <div className="absolute top-16 inset-0 bg-slate-950/20 z-50 flex items-center justify-center pointer-events-none">
                     <div className="bg-slate-900/90 border border-slate-700 px-6 py-3 rounded-2xl flex items-center gap-3">
                       <Lock className="text-orange-500" size={20} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">ReadOnly Mode - Task Submitted</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">ReadOnly - Tugas Sudah Terkirim</span>
                     </div>
                   </div>
                 )}

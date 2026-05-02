@@ -113,19 +113,30 @@ export const DecisionNode = ({ data }) => (
 // 4. Input/Output Node (Parallelogram) - FIX BACKGROUND PUTIH
 export const InputOutputNode = ({ data }) => (
   <NodeWrapper colorClass="purple-400">
-    {/* Container luar dibuat transparan agar tidak ada box putih */}
-    <div className="relative py-3 px-8 bg-transparent overflow-visible">
-      {/* Background jajaran genjang menggunakan pseudo-element atau div terpisah */}
-      <div className="absolute inset-0 border-2 border-purple-500 bg-slate-900/90 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
-           style={{ transform: 'skewX(-20deg)' }}></div>
-      
-      <div className="relative z-10">
-        <EditableLabel 
-          label={data.label} 
-          onChange={(val) => data?.onChange?.(val)} 
-          className="text-xs font-bold text-purple-400"
-          placeholder="INPUT/OUTPUT"
+    
+    {/* OVERRIDE WRAPPER AGAR TRANSPARAN */}
+    <div className="bg-transparent border-none shadow-none p-0">
+
+      <div className="relative py-3 px-10 overflow-visible">
+        
+        {/* SHAPE JAJARAN GENJANG */}
+        <div
+          className="absolute inset-0 border-2 border-purple-500 bg-slate-900/90 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+          style={{ transform: "skewX(-20deg)" }}
         />
+
+        {/* CONTENT (BIAR TEKS TIDAK IKUT MIRING) */}
+        <div className="relative z-10 flex items-center justify-center">
+          <div style={{ transform: "skewX(20deg)" }}>
+            <EditableLabel
+              label={data.label}
+              onChange={(val) => data?.onChange?.(val)}
+              className="text-xs font-bold text-purple-400 text-center"
+              placeholder="INPUT/OUTPUT"
+            />
+          </div>
+        </div>
+
       </div>
     </div>
   </NodeWrapper>
