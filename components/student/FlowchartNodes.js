@@ -96,13 +96,22 @@ export const ProcessNode = ({ data }) => (
 // 3. Decision Node (Diamond)
 export const DecisionNode = ({ data }) => (
   <NodeWrapper colorClass="yellow-400">
-    <div className="relative w-28 h-28 flex items-center justify-center">
+    {/* Ukuran utama diubah dari w-28 h-28 menjadi w-20 h-20 */}
+    <div className="relative w-20 h-20 flex items-center justify-center">
+      
+      {/* Background belah ketupat tetap diputar 45 derajat */}
       <div className="absolute inset-0 border-2 border-yellow-500 bg-slate-900/90 rotate-45 shadow-[0_0_15px_rgba(234,179,8,0.3)]"></div>
-      <div className="relative z-10 p-4 text-center">
+      
+      {/* 
+          Bagian Konten:
+          - p-2: Padding dikurangi dari 4 menjadi 2 agar teks punya ruang lebih luas.
+          - text-[9px]: Ukuran font dikurangi sedikit dari 10px agar lebih pas dengan kotak kecil.
+      */}
+      <div className="relative z-10 p-2 text-center w-full">
         <EditableLabel 
           label={data.label} 
           onChange={(val) => data?.onChange?.(val)} 
-          className="text-[10px] font-bold text-yellow-500 leading-tight"
+          className="text-[9px] font-bold text-yellow-500 leading-tight"
           placeholder="KONDISI?"
         />
       </div>
