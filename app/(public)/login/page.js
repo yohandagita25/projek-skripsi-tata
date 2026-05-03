@@ -51,7 +51,9 @@ export default function LoginPage() {
 
       <nav className="sticky top-0 z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
         <Link href="/">
-          <h1 className="text-xl font-bold text-blue-400 cursor-pointer">Semantic Wave</h1>
+          <h1 className="text-2xl font-black text-blue-400 cursor-pointer italic tracking-tighter uppercase">
+            Semantic Wave
+          </h1>
         </Link>
       </nav>
       
