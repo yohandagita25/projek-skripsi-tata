@@ -56,7 +56,7 @@ export default function LandingPage() {
         <p className="mt-6 text-slate-400 max-w-2xl mx-auto text-lg italic leading-relaxed">
           Platform pembelajaran pemrograman C.
         </p>
-        <p className="mt-6 text-slate-400 max-w-2xl mx-auto text-lg italic leading-relaxed">
+        <p className="text-slate-400 max-w-2xl mx-auto text-lg italic leading-relaxed">
           Asah kemampuan berpikir logis melalui modul interaktif, visualisasi flowchart, dan tantangan coding.
         </p>
         <div className="mt-12 flex justify-center gap-6">
