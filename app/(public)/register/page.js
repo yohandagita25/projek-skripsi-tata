@@ -62,11 +62,11 @@ const handleSubmit = async (e) => {
         {/* NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
           <Link href="/">
-            <h1 className="text-xl font-bold text-blue-400 cursor-pointer">
+            <h1 className="text-2xl font-black text-blue-400 cursor-pointer italic tracking-tighter uppercase">
               Semantic Wave
             </h1>
           </Link>
-        </nav>    
+        </nav>
 
         {/* REGISTER CARD */}
         <div className="flex items-center justify-center px-6 py-20">

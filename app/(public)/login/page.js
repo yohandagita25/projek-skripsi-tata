@@ -49,12 +49,14 @@ export default function LoginPage() {
         <div className="absolute w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-30 animate-pulse bottom-10 right-10"></div>
       </div>
 
-      <nav className="sticky top-0 z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
+      <nav className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-10 py-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-lg">
         <Link href="/">
-          <h1 className="text-xl font-bold text-blue-400 cursor-pointer">Semantic Wave</h1>
+          <h1 className="text-2xl font-black text-blue-400 cursor-pointer italic tracking-tighter uppercase">
+            Semantic Wave
+          </h1>
         </Link>
       </nav>
-      
+
       <div className="flex items-center justify-center px-6 py-20">
         <div className="bg-slate-900/80 backdrop-blur-lg p-10 rounded-2xl shadow-xl w-full max-w-md border border-slate-800">
           <h2 className="text-3xl font-bold text-center mb-2">Welcome Back</h2>
