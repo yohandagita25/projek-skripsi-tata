@@ -67,8 +67,6 @@ const handleSubmit = async (e) => {
             </h1>
           </Link>
         </nav>
-        
-        
 
         {/* REGISTER CARD */}
         <div className="flex items-center justify-center px-6 py-20">
