@@ -36,8 +36,6 @@ export default function LandingPage() {
           </h1>
         </Link>
         <div className="flex gap-8 items-center font-bold text-xs uppercase tracking-widest">
-          <a href="#courses" className="hover:text-blue-400 transition-colors">Courses</a>
-          <a href="#features" className="hover:text-blue-400 transition-colors">Features</a>
           <Link href="/login">
             <button className="bg-blue-600 px-6 py-2 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20">
               Login
@@ -56,9 +54,10 @@ export default function LandingPage() {
           Beyond The Code
         </h1>
         <p className="mt-6 text-slate-400 max-w-2xl mx-auto text-lg italic leading-relaxed">
-          Platform pembelajaran pemrograman C khusus siswa SMK. 
-          Asah kemampuan berpikir logis melalui modul interaktif, 
-          tantangan coding, dan visualisasi flowchart.
+          Platform pembelajaran pemrograman C.
+        </p>
+        <p className="mt-6 text-slate-400 max-w-2xl mx-auto text-lg italic leading-relaxed">
+          Asah kemampuan berpikir logis melalui modul interaktif, visualisasi flowchart, dan tantangan coding.
         </p>
         <div className="mt-12 flex justify-center gap-6">
           <Link href="/register">
@@ -74,25 +73,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* REVISED STATS SECTION (Informasi Lebih Masuk Akal) */}
-      <section className="py-20 bg-slate-900 border-y border-slate-800/50">
-        <div className="grid grid-cols-2 md:grid-cols-4 text-center gap-12 max-w-6xl mx-auto px-10">
-          {[
-            { label: "Curriculum Standard", val: "SMK-Based" },
-            { label: "Primary Language", val: "C Language" },
-            { label: "Logic Builder", val: "Flowchart" },
-            { label: "Validation", val: "Pre/Post Test" },
-          ].map((stat, i) => (
-            <div key={i}>
-              <h3 className="text-2xl font-black text-white italic tracking-tight uppercase">{stat.val}</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* FEATURED COURSES */}
-      <section id="courses" className="py-32 px-10 bg-slate-950">
+      <section id="courses" className="py-32 px-10 bg-slate-900 border-y border-slate-800/50">
         <div className="text-center mb-20">
           <h2 className="text-4xl font-black text-white uppercase italic tracking-tighter mb-4">
             Available Modules
@@ -122,7 +104,7 @@ export default function LandingPage() {
                     </p>
                   </div>
                   <div className="mt-10 flex items-center gap-3 text-blue-500 font-black text-[10px] uppercase tracking-[0.3em]">
-                    Go to Login <ArrowRight size={18} />
+                    EXPLORE NOW <ArrowRight size={18} />
                   </div>
                 </div>
               </Link>
@@ -132,7 +114,7 @@ export default function LandingPage() {
       </section>
 
       {/* LEARNING EXPERIENCE */}
-      <section id="features" className="py-32 px-10 bg-slate-900/50">
+      <section id="features" className="py-32 px-10 bg-slate-950">
         <h2 className="text-3xl font-black text-center mb-20 uppercase italic tracking-tighter">
           Key Features
         </h2>
