@@ -4,36 +4,40 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { 
-  ChevronLeft, Book, ChevronDown, ChevronRight, 
-  Loader2, FileCode, GitGraph, Layers
+  ChevronLeft, Layers, ChevronDown, ChevronRight, 
+  Loader2, FileCode, GitGraph
 } from "lucide-react";
 
 export default function ModuleGradingSelector() {
   const params = useParams();
   const router = useRouter();
-  const [modules, setModules] = useState([]);
+  const [groupedModules, setGroupedModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openModuleId, setOpenModuleId] = useState(null); // Untuk mengontrol accordion modul
+  const [openModuleIndex, setOpenModuleIndex] = useState(null);
 
   useEffect(() => {
     const fetchGradingData = async () => {
       try {
         setLoading(true);
-        // Kita gunakan endpoint yang mengambil struktur Course -> Module -> Materi
         const res = await api.get(`/api/teacher/grading/course/${params.courseId}`);
-        const dataResult = res.data?.data || [];
+        const rawData = res.data?.data || [];
         
-        // Kelompokkan materi berdasarkan modulnya secara manual di frontend
-        const grouped = dataResult.reduce((acc, curr) => {
-          const modName = curr.module_name || "Lainnya";
-          if (!acc[modName]) acc[modName] = { name: modName, items: [] };
-          acc[modName].items.push(curr);
+        // Mengelompokkan materi berdasarkan nama modul asli dari DB
+        const groups = rawData.reduce((acc, item) => {
+          const key = item.module_name; // Menggunakan module_name dari DB
+          if (!acc[key]) {
+            acc[key] = {
+              moduleName: key,
+              materiList: []
+            };
+          }
+          acc[key].materiList.push(item);
           return acc;
         }, {});
 
-        setModules(Object.values(grouped));
+        setGroupedModules(Object.values(groups));
       } catch (err) {
-        console.error("Gagal load data grading:", err);
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -43,70 +47,87 @@ export default function ModuleGradingSelector() {
 
   if (loading) return (
     <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
-      <Loader2 className="animate-spin mb-4" size={40} />
-      <p className="uppercase tracking-widest text-[10px] font-black italic opacity-50">Menyiapkan Struktur Modul...</p>
+      <Loader2 className="animate-spin mb-4" size={48} />
+      <p className="uppercase tracking-[0.3em] text-[10px] font-black italic opacity-50">Syncing Modules...</p>
     </div>
   );
 
   return (
-    <div className="p-10 bg-slate-950 min-h-screen text-white font-sans">
+    <div className="p-10 bg-slate-950 min-h-screen text-white font-sans selection:bg-blue-500/30">
       <button 
         onClick={() => router.push("/teacher/grading")}
-        className="flex items-center gap-2 text-slate-500 hover:text-white transition-all mb-8 group"
+        className="flex items-center gap-3 text-slate-500 hover:text-white transition-all mb-10 group"
       >
         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
         <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
       </button>
 
-      <header className="mb-12">
+      <header className="mb-14">
         <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 italic">Penilaian Per Modul</h1>
-        <p className="text-slate-500 text-sm font-medium">Klik pada modul untuk melihat materi praktik di dalamnya.</p>
+        <p className="text-slate-500 text-sm font-medium">Silakan pilih modul, lalu pilih materi yang ingin dinilai.</p>
       </header>
 
       <div className="space-y-6">
-        {modules.map((mod, idx) => (
-          <div key={idx} className="bg-slate-900/20 border border-slate-800 rounded-[35px] overflow-hidden transition-all">
-            {/* Header Modul (Pilih Modul) */}
-            <button 
-              onClick={() => setOpenModuleId(openModuleId === idx ? null : idx)}
-              className="w-full flex items-center justify-between p-8 hover:bg-slate-800/30 transition-all"
-            >
-              <div className="flex items-center gap-6">
-                <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500 border border-blue-500/20">
-                  <Layers size={24} />
-                </div>
-                <h3 className="text-xl font-black uppercase italic tracking-tight">{mod.name}</h3>
-              </div>
-              {openModuleId === idx ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
-            </button>
-
-            {/* Daftar Materi (Pilih Materi) */}
-            {openModuleId === idx && (
-              <div className="px-8 pb-8 space-y-3 animate-in slide-in-from-top-2 duration-300">
-                {mod.items.map((m) => (
-                  <div 
-                    key={m.id}
-                    onClick={() => router.push(`/teacher/grading/${params.courseId}/${m.id}`)}
-                    className="flex items-center justify-between p-5 bg-slate-950/50 border border-slate-800 rounded-2xl hover:border-blue-500 cursor-pointer group transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      {m.type === 'code' ? <FileCode size={18} className="text-blue-400" /> : <GitGraph size={18} className="text-purple-400" />}
-                      <span className="text-sm font-bold text-slate-300 group-hover:text-white uppercase">{m.title}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {parseInt(m.pending_count) > 0 && (
-                        <span className="bg-orange-500/10 text-orange-500 text-[9px] font-black px-3 py-1 rounded-full border border-orange-500/20 uppercase">
-                          {m.pending_count} Perlu Dinilai
-                        </span>
-                      )}
-                      <ChevronRight size={16} className="text-slate-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                    </div>
+        {groupedModules.length > 0 ? (
+          groupedModules.map((mod, idx) => (
+            <div key={idx} className="bg-slate-900/20 border border-slate-800 rounded-[40px] overflow-hidden transition-all shadow-xl">
+              {/* HEADER MODUL (DROPDOWN TRIGGER) */}
+              <button 
+                onClick={() => setOpenModuleIndex(openModuleIndex === idx ? null : idx)}
+                className={`w-full flex items-center justify-between p-8 transition-all ${openModuleIndex === idx ? "bg-slate-800/40" : "hover:bg-slate-800/20"}`}
+              >
+                <div className="flex items-center gap-6">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${openModuleIndex === idx ? "bg-blue-600 text-white shadow-lg" : "bg-slate-800 text-slate-500"}`}>
+                    <Layers size={28} />
                   </div>
-                ))}
-              </div>
-            )}
+                  <h3 className="text-2xl font-black uppercase italic tracking-tight text-left">{mod.moduleName}</h3>
+                </div>
+                <div className={`p-2 rounded-full transition-transform duration-300 ${openModuleIndex === idx ? "rotate-180 bg-blue-600 text-white" : "bg-slate-800 text-slate-500"}`}>
+                  <ChevronDown size={24} />
+                </div>
+              </button>
+
+              {/* LIST MATERI DALAM MODUL */}
+              {openModuleIndex === idx && (
+                <div className="px-8 pb-8 space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <div className="h-px bg-slate-800 w-full mb-6"></div>
+                  {mod.materiList.map((materi) => (
+                    <div 
+                      key={materi.id}
+                      onClick={() => router.push(`/teacher/grading/${params.courseId}/${materi.id}`)}
+                      className="flex items-center justify-between p-6 bg-slate-950/40 border border-slate-800 rounded-3xl hover:border-blue-500 hover:bg-slate-900/60 cursor-pointer group transition-all"
+                    >
+                      <div className="flex items-center gap-5">
+                        <div className={`p-3 rounded-xl ${materi.type === 'code' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                          {materi.type === 'code' ? <FileCode size={20} /> : <GitGraph size={20} />}
+                        </div>
+                        <span className="text-base font-bold text-slate-300 group-hover:text-white uppercase tracking-tight italic transition-colors">
+                          {materi.title}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        {parseInt(materi.pending_count) > 0 && (
+                          <div className="flex flex-col items-end">
+                            <span className="bg-orange-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full shadow-lg shadow-orange-900/20 uppercase tracking-widest">
+                              {materi.pending_count} Pending
+                            </span>
+                          </div>
+                        )}
+                        <ChevronRight size={20} className="text-slate-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="p-20 bg-slate-900/10 border-2 border-dashed border-slate-900 rounded-[40px] text-center opacity-30">
+            <Layers size={48} className="mx-auto mb-4 text-slate-800" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Tidak ada materi praktik yang ditemukan.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
