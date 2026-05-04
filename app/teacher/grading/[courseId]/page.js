@@ -4,123 +4,109 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { 
-  ChevronLeft, 
-  ClipboardList, 
-  Clock, 
-  CheckCircle2, 
-  ChevronRight, 
-  Loader2,
-  FileCode,
-  GitGraph
+  ChevronLeft, Book, ChevronDown, ChevronRight, 
+  Loader2, FileCode, GitGraph, Layers
 } from "lucide-react";
 
-export default function SubBabGradingList() {
+export default function ModuleGradingSelector() {
   const params = useParams();
   const router = useRouter();
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openModuleId, setOpenModuleId] = useState(null); // Untuk mengontrol accordion modul
 
   useEffect(() => {
-    const fetchSubBab = async () => {
+    const fetchGradingData = async () => {
       try {
         setLoading(true);
-        // Mengambil materi yang memiliki assignment di course ini
+        // Kita gunakan endpoint yang mengambil struktur Course -> Module -> Materi
         const res = await api.get(`/api/teacher/grading/course/${params.courseId}`);
         const dataResult = res.data?.data || [];
-        setModules(Array.isArray(dataResult) ? dataResult : []);
+        
+        // Kelompokkan materi berdasarkan modulnya secara manual di frontend
+        const grouped = dataResult.reduce((acc, curr) => {
+          const modName = curr.module_name || "Lainnya";
+          if (!acc[modName]) acc[modName] = { name: modName, items: [] };
+          acc[modName].items.push(curr);
+          return acc;
+        }, {});
+
+        setModules(Object.values(grouped));
       } catch (err) {
-        console.error("Gagal load sub-bab:", err);
-        setModules([]);
+        console.error("Gagal load data grading:", err);
       } finally {
         setLoading(false);
       }
     };
-    if (params.courseId) fetchSubBab();
+    if (params.courseId) fetchGradingData();
   }, [params.courseId]);
 
   if (loading) return (
     <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
       <Loader2 className="animate-spin mb-4" size={40} />
-      <p className="uppercase tracking-widest text-[10px] font-black italic opacity-50">Menganalisis Progres Kelas...</p>
+      <p className="uppercase tracking-widest text-[10px] font-black italic opacity-50">Menyiapkan Struktur Modul...</p>
     </div>
   );
 
   return (
-    <div className="p-10 bg-slate-950 min-h-screen text-white font-sans selection:bg-blue-500/30">
-      {/* Tombol Kembali ke Dashboard Grading */}
+    <div className="p-10 bg-slate-950 min-h-screen text-white font-sans">
       <button 
         onClick={() => router.push("/teacher/grading")}
         className="flex items-center gap-2 text-slate-500 hover:text-white transition-all mb-8 group"
       >
         <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        <span className="text-[10px] font-black uppercase tracking-widest">Dashboard Utama</span>
+        <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
       </button>
 
       <header className="mb-12">
-        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 italic">Daftar Penilaian</h1>
-        <p className="text-slate-500 text-sm font-medium">Pilih sub-bab materi untuk melihat daftar pengumpulan siswa.</p>
+        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 italic">Penilaian Per Modul</h1>
+        <p className="text-slate-500 text-sm font-medium">Klik pada modul untuk melihat materi praktik di dalamnya.</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4">
-        {modules.length > 0 ? (
-          modules.map((m) => {
-            const pendingVal = parseInt(m.pending_count) || 0;
-            const gradedVal = parseInt(m.graded_count) || 0;
-            const hasPending = pendingVal > 0;
-
-            return (
-              <div 
-                key={m.id}
-                onClick={() => router.push(`/teacher/grading/${params.courseId}/${m.id}`)}
-                className={`group flex items-center justify-between p-6 rounded-[35px] border-2 transition-all cursor-pointer ${
-                  hasPending 
-                  ? "bg-orange-500/5 border-orange-500/20 hover:border-orange-500 shadow-xl shadow-orange-950/5" 
-                  : "bg-slate-900/40 border-slate-800 hover:border-blue-500"
-                }`}
-              >
-                <div className="flex items-center gap-6">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-lg ${
-                    hasPending ? "bg-orange-500 text-white" : "bg-slate-800 text-slate-400 group-hover:bg-blue-600 group-hover:text-white"
-                  }`}>
-                    {m.type === 'code' ? <FileCode size={24} /> : <GitGraph size={24} />}
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-black group-hover:text-white transition-colors uppercase tracking-tight italic">
-                      {m.title}
-                    </h3>
-                    <div className="flex items-center gap-4 mt-1">
-                      <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
-                        Task Type: {m.type === 'code' ? 'Algoritma Pemrograman' : 'Logika Flowchart'}
-                      </span>
-                    </div>
-                  </div>
+      <div className="space-y-6">
+        {modules.map((mod, idx) => (
+          <div key={idx} className="bg-slate-900/20 border border-slate-800 rounded-[35px] overflow-hidden transition-all">
+            {/* Header Modul (Pilih Modul) */}
+            <button 
+              onClick={() => setOpenModuleId(openModuleId === idx ? null : idx)}
+              className="w-full flex items-center justify-between p-8 hover:bg-slate-800/30 transition-all"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500 border border-blue-500/20">
+                  <Layers size={24} />
                 </div>
-
-                <div className="flex items-center gap-8">
-                  <div className="hidden md:flex flex-col items-end">
-                    <div className={`flex items-center gap-2 mb-1 ${hasPending ? "text-orange-500" : "text-slate-600"}`}>
-                      <Clock size={14} />
-                      <span className="text-[10px] font-black uppercase">{pendingVal} Belum Dinilai</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-green-600/40">
-                      <CheckCircle2 size={14} />
-                      <span className="text-[10px] font-black uppercase">{gradedVal} Selesai</span>
-                    </div>
-                  </div>
-                  <div className={`p-2 rounded-full transition-all ${hasPending ? "bg-orange-500/20 text-orange-500" : "bg-slate-800 text-slate-600 group-hover:text-white"}`}>
-                    <ChevronRight size={24} className="group-hover:translate-x-1 transition-all" />
-                  </div>
-                </div>
+                <h3 className="text-xl font-black uppercase italic tracking-tight">{mod.name}</h3>
               </div>
-            );
-          })
-        ) : (
-          <div className="p-20 bg-slate-900/10 border-2 border-dashed border-slate-900 rounded-[40px] text-center opacity-30">
-            <ClipboardList size={48} className="mx-auto mb-4 text-slate-800" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Materi ini tidak memiliki tugas praktik.</p>
+              {openModuleId === idx ? <ChevronDown size={24} /> : <ChevronRight size={24} />}
+            </button>
+
+            {/* Daftar Materi (Pilih Materi) */}
+            {openModuleId === idx && (
+              <div className="px-8 pb-8 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                {mod.items.map((m) => (
+                  <div 
+                    key={m.id}
+                    onClick={() => router.push(`/teacher/grading/${params.courseId}/${m.id}`)}
+                    className="flex items-center justify-between p-5 bg-slate-950/50 border border-slate-800 rounded-2xl hover:border-blue-500 cursor-pointer group transition-all"
+                  >
+                    <div className="flex items-center gap-4">
+                      {m.type === 'code' ? <FileCode size={18} className="text-blue-400" /> : <GitGraph size={18} className="text-purple-400" />}
+                      <span className="text-sm font-bold text-slate-300 group-hover:text-white uppercase">{m.title}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      {parseInt(m.pending_count) > 0 && (
+                        <span className="bg-orange-500/10 text-orange-500 text-[9px] font-black px-3 py-1 rounded-full border border-orange-500/20 uppercase">
+                          {m.pending_count} Perlu Dinilai
+                        </span>
+                      )}
+                      <ChevronRight size={16} className="text-slate-700 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        ))}
       </div>
     </div>
   );
