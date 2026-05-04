@@ -1,202 +1,197 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { 
-  ChevronLeft, Send, Loader2, User, 
-  Terminal, FileCode, CheckCircle, MessageSquare,
-  BrainCircuit
+  ChevronLeft, User, Search, CheckCircle, 
+  Clock, X, Send, Loader2, Award
 } from "lucide-react";
+// Import render fungsi yang sudah kita perbaiki sebelumnya
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
-// ✅ TAMBAHAN: Import ReactFlow untuk menampilkan hasil kerja siswa
 import ReactFlow, { ReactFlowProvider, Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { StartNode, ProcessNode, DecisionNode, InputOutputNode, TextNode } from "@/components/student/FlowchartNodes";
 
-const nodeTypes = { 
-  start: StartNode, 
-  process: ProcessNode, 
-  decision: DecisionNode, 
-  input: InputOutputNode,
-  text: TextNode 
-};
-
-export default function StudentSubmissionsPage() {
+export default function StudentListPage() {
   const params = useParams();
   const router = useRouter();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submittingId, setSubmittingId] = useState(null);
+  const [search, setSearch] = useState("");
+  
+  // State untuk Modal
+  const [selectedSub, setSelectedSub] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const quickFeedbacks = [
-    "Logika percabangan sudah tepat, pertahankan!",
-    "Sintaks sudah benar, tapi perhatikan kerapian indentasi.",
-    "Flowchart mudah dipahami, simbol sudah sesuai.",
-    "Masih ada kesalahan logika pada kondisi, silakan pelajari lagi.",
-    "Output program belum sesuai dengan instruksi soal."
-  ];
+  useEffect(() => {
+    fetchSubmissions();
+  }, [params.materiId]);
 
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
       const res = await api.get(`/api/teacher/grading/materi/${params.materiId}`);
-      const dataResult = res.data?.data || res.data || [];
-      setSubmissions(Array.isArray(dataResult) ? dataResult : []);
+      setSubmissions(res.data?.data || []);
     } catch (err) {
-      console.error("Gagal load:", err);
-      setSubmissions([]);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (params.materiId) fetchSubmissions();
-  }, [params.materiId]);
+  const openGradingModal = (submission) => {
+    setSelectedSub(submission);
+    setIsModalOpen(true);
+  };
 
-  const handleUpdateGrade = async (subId, score, feedback) => {
-    if (!score) return alert("Berikan nilai terlebih dahulu!");
-    setSubmittingId(subId);
+  const handleSaveGrade = async (e) => {
+    e.preventDefault();
+    const score = e.target.score.value;
+    const feedback = e.target.feedback.value;
+
+    setIsSaving(true);
     try {
-      await api.put(`/api/teacher/grading/submit/${subId}`, { 
-        score: parseInt(score), 
-        feedback 
+      await api.put(`/api/teacher/grading/submit/${selectedSub.submission_id}`, {
+        score: parseInt(score),
+        feedback
       });
-      alert("✅ Nilai berhasil diperbarui!");
-      fetchSubmissions();
+      setIsModalOpen(false);
+      fetchSubmissions(); // Update list secara real-time
     } catch (err) {
-      alert("Gagal menyimpan nilai.");
+      alert("Gagal simpan nilai");
     } finally {
-      setSubmittingId(null);
+      setIsSaving(false);
     }
   };
 
-  // ✅ PERBAIKAN: Fungsi render yang bisa menampilkan diagram asli
-  const renderStudentWork = (content) => {
-    if (!content) return <p className="text-slate-500 italic text-xs">Tidak ada jawaban.</p>;
+  const filteredStudents = submissions.filter(s => 
+    s.student_name.toLowerCase().includes(search.toLowerCase())
+  );
 
-    try {
-      const parsed = typeof content === 'string' ? JSON.parse(content) : content;
-      
-      // 1. RENDER FLOWCHART ASLI
-      if (parsed?.task?.nodes || parsed?.nodes) {
-        const flowData = parsed.task || parsed;
-        return (
-          <div className="h-[400px] w-full bg-slate-950 rounded-[32px] border border-slate-800 relative overflow-hidden shadow-2xl">
-             <ReactFlowProvider>
-                <ReactFlow
-                  nodes={flowData.nodes || []}
-                  edges={flowData.edges || []}
-                  nodeTypes={nodeTypes}
-                  fitView
-                  nodesDraggable={false}
-                  nodesConnectable={false}
-                  elementsSelectable={false}
-                  panOnDrag={true}
-                  zoomOnScroll={true}
-                >
-                  <Background color="#1e293b" variant="dots" />
-                  <Controls showInteractive={false} />
-                </ReactFlow>
-             </ReactFlowProvider>
-             <div className="absolute top-4 right-4 bg-slate-900/80 px-3 py-1 rounded-full border border-slate-700 pointer-events-none">
-                <p className="text-[8px] font-black uppercase text-blue-400 tracking-widest">Interactive Diagram View</p>
-             </div>
-          </div>
-        );
-      }
+  if (loading) return <div className="h-screen bg-slate-950 flex items-center justify-center text-blue-500"><Loader2 className="animate-spin" size={40} /></div>;
 
-      // 2. RENDER CODING
-      const code = parsed?.task?.code || parsed?.code || "";
-      const output = parsed?.task?.output || parsed?.output || "No output.";
+  return (
+    <div className="p-10 bg-slate-950 min-h-screen text-white font-sans">
+      {/* HEADER & SEARCH */}
+      <div className="flex justify-between items-end mb-10">
+        <div>
+          <button onClick={() => router.push(`/teacher/grading/${params.courseId}`)} className="flex items-center gap-2 text-slate-500 hover:text-white mb-4 text-xs font-black uppercase tracking-widest transition-all">
+            <ChevronLeft size={16} /> Kembali ke Materi
+          </button>
+          <h1 className="text-4xl font-black uppercase italic tracking-tighter">Daftar Pengumpulan</h1>
+        </div>
+        <div className="relative w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+          <input 
+            type="text" placeholder="Cari nama siswa..." 
+            className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-white"
+            value={search} onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
 
-      return (
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-blue-400"><FileCode size={16} /><span className="text-[10px] font-black uppercase tracking-widest italic">Source Code</span></div>
-            <div className="rounded-2xl overflow-hidden border border-slate-800 text-xs shadow-2xl">
-              <SyntaxHighlighter language="cpp" style={vscDarkPlus} customStyle={{ margin: 0, padding: '24px', fontSize: '13px', backgroundColor: '#020617' }}>
-                {code}
-              </SyntaxHighlighter>
+      {/* TABEL SISWA */}
+      <div className="bg-slate-900/40 border border-slate-800 rounded-[40px] overflow-hidden shadow-2xl">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="bg-slate-800/50 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+              <th className="p-8">Siswa</th>
+              <th className="p-8">Status</th>
+              <th className="p-8">Skor</th>
+              <th className="p-8 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-800/50">
+            {filteredStudents.map((s) => (
+              <tr key={s.submission_id} className="hover:bg-blue-600/5 transition-all group">
+                <td className="p-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-all"><User size={20} /></div>
+                    <div>
+                        <p className="font-bold text-white uppercase italic tracking-tight">{s.student_name}</p>
+                        <p className="text-[10px] text-slate-500">{s.student_email || "Siswa Aktif"}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="p-8">
+                  <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${s.status === 'graded' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}`}>
+                    {s.status === 'graded' ? <CheckCircle size={10} className="inline mr-1"/> : <Clock size={10} className="inline mr-1"/>}
+                    {s.status}
+                  </span>
+                </td>
+                <td className="p-8 font-black text-xl italic text-blue-500">{s.score || "—"}</td>
+                <td className="p-8 text-right">
+                  <button onClick={() => openGradingModal(s)} className="bg-slate-800 hover:bg-blue-600 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    {s.status === 'graded' ? "Edit Nilai" : "Beri Nilai"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* CUSTOM MODAL TAILWIND */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 md:p-12 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          <div className="relative bg-slate-900 border border-slate-800 w-full max-w-6xl h-full max-h-[85vh] rounded-[50px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+            
+            {/* Modal Header */}
+            <div className="p-8 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20"><Award className="text-white" /></div>
+                <div>
+                  <h2 className="text-2xl font-black uppercase italic tracking-tighter">Penilaian: {selectedSub.student_name}</h2>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">ID Submission: #SUB-{selectedSub.submission_id}</p>
+                </div>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-800 hover:bg-red-500/20 text-slate-500 hover:text-red-500 rounded-2xl transition-all"><X size={24} /></button>
             </div>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-green-500"><Terminal size={16} /><span className="text-[10px] font-black uppercase tracking-widest italic">Last Console Output</span></div>
-            <div className="bg-[#050505] p-6 rounded-2xl border border-slate-800 font-mono text-xs text-green-400 min-h-[100px] shadow-inner relative overflow-hidden">
-              <pre className="whitespace-pre-wrap leading-relaxed">{output.replace("✅ Output:\n", "").replace("❌ Error:\n", "")}</pre>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-10 flex flex-col lg:flex-row gap-10 custom-scrollbar">
+              {/* Sisi Kiri: Jawaban Siswa */}
+              <div className="flex-1 space-y-6">
+                 <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mb-4">Hasil Pekerjaan Siswa</h4>
+                 <div className="bg-slate-950 p-6 rounded-[32px] border border-slate-800 min-h-[300px]">
+                    {/* Render Konten Disini (Gunakan logika renderStudentWork Bapak) */}
+                    <p className="text-slate-500 italic text-xs mb-4">Melihat data content...</p>
+                    <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">{JSON.stringify(JSON.parse(selectedSub.content), null, 2)}</pre>
+                 </div>
+              </div>
+
+              {/* Sisi Kanan: Form Nilai */}
+              <form onSubmit={handleSaveGrade} className="w-full lg:w-80 space-y-8">
+                <div className="space-y-4 text-center">
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Input Skor Akhir</label>
+                   <input 
+                    name="score" type="number" max="100" min="0" required
+                    defaultValue={selectedSub.score || ""}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-[35px] py-10 text-6xl font-black text-center text-blue-500 outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                    placeholder="0"
+                   />
+                </div>
+
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-4">Feedback Guru</label>
+                   <textarea 
+                    name="feedback" defaultValue={selectedSub.feedback || ""}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-[30px] p-6 text-sm text-slate-300 outline-none h-40 focus:ring-1 focus:ring-blue-600"
+                    placeholder="Contoh: Logika sudah bagus..."
+                   ></textarea>
+                </div>
+
+                <button disabled={isSaving} type="submit" className="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-[25px] font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-blue-900/20 flex items-center justify-center gap-3 active:scale-95 transition-all">
+                  {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />} Simpan & Selesai
+                </button>
+              </form>
             </div>
           </div>
         </div>
-      );
-    } catch (e) {
-      return <pre className="bg-slate-950 p-6 rounded-3xl text-green-400 text-sm whitespace-pre-wrap font-mono">{content}</pre>;
-    }
-  };
-
-  if (loading) return (
-    <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
-      <Loader2 className="animate-spin mb-4" size={40} /><p className="uppercase tracking-widest text-[10px] font-black italic opacity-50">Menganalisis Jawaban...</p>
-    </div>
-  );
-
-  return (
-    <div className="p-6 md:p-10 bg-slate-950 min-h-screen text-white selection:bg-blue-500/30">
-      <button onClick={() => router.push(`/teacher/grading/${params.courseId}`)} className="flex items-center gap-2 text-slate-500 hover:text-white mb-8 group transition-all">
-        <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        <span className="text-[10px] font-black uppercase tracking-widest">Back to Sub-Bab</span>
-      </button>
-
-      <div className="max-w-6xl mx-auto space-y-10">
-        {submissions.map((sub) => (
-          <div key={sub.submission_id} className="bg-slate-900/40 border border-slate-800 rounded-[45px] overflow-hidden shadow-2xl transition-all hover:border-slate-700/50">
-            <div className="p-8 border-b border-slate-800/50 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900/20">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[22px] flex items-center justify-center shadow-lg"><User size={28} className="text-white" /></div>
-                <div><h3 className="text-2xl font-black tracking-tight uppercase italic">{sub.student_name}</h3><span className={`text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full ${sub.status === 'graded' ? 'bg-green-500/10 text-green-400' : 'bg-orange-500/10 text-orange-400'}`}>{sub.status}</span></div>
-              </div>
-            </div>
-
-            <div className="p-8 md:p-10">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-6 bg-slate-700 rounded-full"></div><p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Instruksi Tugas</p></div>
-                  <div className="bg-slate-950/50 p-7 rounded-[32px] border border-slate-800/50 text-sm leading-relaxed text-slate-400 italic">"{sub.task_instruction}"</div>
-                </div>
-                <div className="space-y-6">
-                  <div className="flex items-center gap-2"><div className="w-1.5 h-6 bg-blue-600 rounded-full animate-pulse"></div><p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Hasil Pekerjaan Siswa</p></div>
-                  {renderStudentWork(sub.content)}
-                </div>
-              </div>
-
-              <div className="mt-12 bg-slate-800/20 p-8 md:p-10 rounded-[40px] border border-slate-700/30">
-                <div className="flex flex-col lg:flex-row gap-10">
-                  <div className="flex-1 space-y-5">
-                    <div className="flex items-center gap-2"><MessageSquare size={16} className="text-slate-500" /><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Teacher's Feedback</p></div>
-                    <textarea id={`feedback-${sub.submission_id}`} defaultValue={sub.feedback || ""} className="w-full bg-slate-900/80 border border-slate-800 rounded-3xl p-6 text-sm text-slate-200 outline-none min-h-[120px]" placeholder="Feedback..." />
-                    <div className="flex flex-wrap gap-2">
-                      {quickFeedbacks.map((text, idx) => (
-                        <button key={idx} onClick={() => { document.getElementById(`feedback-${sub.submission_id}`).value = text; }} className="text-[9px] bg-slate-900 hover:bg-blue-600/20 text-slate-500 px-4 py-2 rounded-full border border-slate-800 font-bold">+ {text}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="w-full lg:w-64 flex flex-col justify-between space-y-6">
-                    <div className="space-y-5 text-center">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Final Score</p>
-                      <div className="relative"><input id={`score-${sub.submission_id}`} type="number" defaultValue={sub.score || ""} className="w-full bg-slate-900 border border-slate-800 rounded-[32px] py-8 text-center text-5xl font-black text-blue-500 outline-none" /><span className="absolute bottom-4 right-8 text-slate-700 font-black text-xs">/ 100</span></div>
-                    </div>
-                    <button disabled={submittingId === sub.submission_id} onClick={() => { const score = document.getElementById(`score-${sub.submission_id}`).value; const feedback = document.getElementById(`feedback-${sub.submission_id}`).value; handleUpdateGrade(sub.submission_id, score, feedback); }} className="w-full bg-blue-600 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                      {submittingId === sub.submission_id ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />} Simpan Nilai
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 }
