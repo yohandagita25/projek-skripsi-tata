@@ -39,7 +39,7 @@ const handleSubmit = async (e) => {
 
   try {
     // GANTI fetch lama dengan axios (api) yang sudah kita buat
-    const res = await api.post("/auth/register", form);
+    const res = await api.post("/api/auth/register", form);
 
     // Axios otomatis mengubah ke JSON, jadi kita ambil dari res.data
     setMessage("Register berhasil! Redirecting...");
