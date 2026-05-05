@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-// ✅ SINKRONISASI: Menggunakan instance api (Axios) agar token auth otomatis terkirim
 import { api } from "@/lib/api";
 import { Star, BookOpen, ChevronRight, Loader2, GraduationCap } from "lucide-react";
 
