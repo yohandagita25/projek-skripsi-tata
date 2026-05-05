@@ -202,7 +202,7 @@ export default function StudentListPage() {
                 <td className="p-8 font-black text-2xl italic text-blue-500 tracking-tighter">{s.score || "—"}</td>
                 <td className="p-8 text-right">
                   <button onClick={() => openGradingModal(s)} className="bg-slate-800 hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
-                    {s.status === 'graded' ? "Edit Grade" : "Give Grade"}
+                    {s.status === 'graded' ? "Edit Nilai" : "Beri Nilai"}
                   </button>
                 </td>
               </tr>

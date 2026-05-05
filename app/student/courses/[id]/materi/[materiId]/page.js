@@ -165,6 +165,26 @@ export default function MateriPage() {
     } else { setCanGoNext(isSubmitted); }
   }, [timeLeft, materi, isSubmitted]);
 
+  useEffect(() => {
+    const logActivity = async () => {
+      try {
+        // Menghubungi backend untuk mencatat aktivitas durasi
+        await api.post("/api/student/log-activity");
+      } catch (err) {
+        console.error("Gagal mencatat durasi belajar");
+      }
+    };
+  
+    // Kirim sinyal setiap kali materiId berubah
+    if (params?.materiId) {
+      logActivity();
+      
+      // Opsional: Kirim sinyal "Keep Alive" setiap 1 menit jika siswa stay di satu halaman
+      const interval = setInterval(logActivity, 60000); 
+      return () => clearInterval(interval);
+    }
+  }, [params?.materiId]);
+
   const onConnect = useCallback((params) => {
     if (isSubmitted) return;
     setEdges((eds) => addEdge(params, eds));
@@ -308,6 +328,7 @@ export default function MateriPage() {
               </div>
             )}
 
+            {/* Assignment Card */}
             {/* Assignment Card */}
             {materi?.assignment && (
               <div className="mt-16 p-10 rounded-[40px] bg-blue-600/5 border border-blue-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-10">

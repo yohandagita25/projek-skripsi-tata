@@ -185,7 +185,7 @@ export default function Dashboard() {
 
             <div className="mt-10 pt-8 border-t border-slate-800/60 flex justify-between items-end">
               <div className="flex flex-col">
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2 italic">Accumulated Study Time</span>
+                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2 italic">Total Waktu Belajar</span>
                 <span className="text-4xl font-black text-white tracking-tighter leading-none shadow-blue-500/20 drop-shadow-lg">
                   {formatStudyTime(totalStudyMinutes)}
                 </span>
