@@ -40,7 +40,7 @@ export default function CoursesPage() {
         <div className="mt-3 mb-3">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>              
-              <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase italic">
+              <h1 className="text-3xl font-black tracking-tight text-white mb-1 uppercase">
                 Course Tersedia
               </h1>
               <p className="text-slate-500 text-sm font-medium">

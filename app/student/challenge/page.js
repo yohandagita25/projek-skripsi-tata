@@ -53,7 +53,7 @@ export default function ChallengePage() {
           <h1 className="text-3xl font-black uppercase tracking-tighter">Challenges</h1>
         </div>
         <p className="text-slate-500 text-sm max-w-xl">
-          Selesaikan Challenge Awal</p>
+          Selesaikan Challenge Yang Tersedia</p>
       </header>
 
       {/* Grid Challenge */}
