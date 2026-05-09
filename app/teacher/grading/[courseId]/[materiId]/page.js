@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { 
-  ChevronLeft, User, Search, CheckCircle, 
-  Clock, X, Send, Loader2, Award, FileCode, Terminal
+  ChevronLeft, User, Search, 
+  X, Send, Loader2, Award, FileCode, Terminal
 } from "lucide-react";
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -268,15 +268,6 @@ export default function StudentListPage() {
                      />
                      <span className="absolute bottom-4 right-8 text-slate-800 font-black text-xs uppercase">/ 100</span>
                    </div>
-                </div>
-
-                <div className="space-y-4">
-                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block ml-6 italic italic">Teacher's Feedback</label>
-                   <textarea 
-                    name="feedback" defaultValue={selectedSub.feedback || ""}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-[35px] p-8 text-sm text-slate-300 outline-none h-48 focus:ring-2 focus:ring-blue-600/30 transition-all placeholder:italic"
-                    placeholder="Berikan masukan atau apresiasi..."
-                   ></textarea>
                 </div>
 
                 <button disabled={isSaving} type="submit" className="w-full bg-blue-600 hover:bg-blue-500 py-6 rounded-[30px] font-black text-xs uppercase tracking-[0.3em] shadow-2xl shadow-blue-900/30 flex items-center justify-center gap-3 active:scale-95 transition-all text-white">
