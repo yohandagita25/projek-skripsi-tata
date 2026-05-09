@@ -76,7 +76,7 @@ export default function ChallengePage() {
                   {isLocked ? (
                     <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3">
                       <Lock className="text-slate-400" size={40} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Selesaikan Materi</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Selesaikan Materi & Tugas</span>
                     </div>
                   ) : item.is_completed && (
                     <div className="absolute top-5 right-5 bg-green-500 p-2.5 rounded-full shadow-lg">
