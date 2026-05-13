@@ -101,7 +101,7 @@ export default function MateriPage() {
           setIsSubmitted(false);
           setShowWorkspace(false);
           setCanGoNext(false);
-          setTimeLeft(30);
+          setTimeLeft(5);
           setUserReflection("");
           setRunCount(0);
           setUserInput("");
