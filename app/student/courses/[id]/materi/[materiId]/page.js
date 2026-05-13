@@ -42,7 +42,7 @@ export default function MateriPage() {
   const [loading, setLoading] = useState(true);
 
   const [openModules, setOpenModules] = useState({});
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(5);
   const [canGoNext, setCanGoNext] = useState(false);
 
   const [prevMateriId, setPrevMateriId] = useState(null);
