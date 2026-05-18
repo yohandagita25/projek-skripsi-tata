@@ -166,11 +166,11 @@ export default function CoursePage() {
                   </div>
                   
                   <select className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-sm" value={editData.type || "text"} onChange={(e) => setEditData({...editData, type: e.target.value})}>
-                    <option value="text">📄 Teks Pembelajaran</option>
-                    <option value="video">🎥 Video (YouTube)</option>
+                    <option value="text">Normal Teks</option>
+                    <option value="video">Media Pembelajaran</option>
                   </select>
 
-                  <input className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-sm" placeholder="URL YouTube (jika ada)" value={editData.video_url || ""} onChange={(e) => setEditData({...editData, video_url: e.target.value})} />
+                  <input className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-sm" placeholder="URL Media" value={editData.video_url || ""} onChange={(e) => setEditData({...editData, video_url: e.target.value})} />
                   <textarea className="w-full bg-slate-800 p-4 rounded-xl border border-slate-700 text-sm h-32 resize-none" placeholder="Isi materi..." value={editData.content || ""} onChange={(e) => setEditData({...editData, content: e.target.value})} />
 
                   <div className={`p-4 rounded-2xl border transition-all ${hasReflection ? "bg-purple-600/10 border-purple-500/50" : "bg-slate-900 border-slate-800"}`}>
