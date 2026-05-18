@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import CreateCoursePage from "./create/page"; 
-import { Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, MessageSquareQuote, BookOpen } from "lucide-react";
+import { 
+  Plus, ChevronLeft, Trash2, Edit3, FileText, Package, Save, X, 
+  MessageSquareQuote, BookOpen, Target 
+} from "lucide-react";
 // ✅ PERBAIKAN: Gunakan api (huruf kecil) agar sinkron dengan lib/api.js
 import { api } from "@/lib/api";
 import { getFullCourses, updateCourse, updateModule, updateMateri, deleteCourse } from "@/app/services/courseService";
@@ -28,12 +31,13 @@ export default function CoursePage() {
   const [hasReflection, setHasReflection] = useState(false);
   const [reflectionQuestion, setReflectionQuestion] = useState("");
 
+  // ✅ STATE KHUSUS TUJUAN PEMBELAJARAN
+  const [learningObjectives, setLearningObjectives] = useState([]);
+
   const fetchCourses = async () => {
     try {
       setLoading(true);
       const data = await getFullCourses();
-      // ✅ SINKRONISASI: Backend kita sekarang mengirim { status, data: [] }
-      // getFullCourses di service sudah menangani unwrapping data.data
       setCourses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -59,9 +63,25 @@ export default function CoursePage() {
 
       setHasReflection(data.has_reflection || false);
       setReflectionQuestion(data.reflection_question || "");
+      
+      // ✅ SINKRONISASI: Ambil data tujuan pembelajaran
+      setLearningObjectives(data.learning_objectives || []);
     }
     
     setIsModalOpen(true);
+  };
+
+  // ✅ FUNGSI MANAJEMEN TUJUAN PEMBELAJARAN (MODAL)
+  const handleObjectiveChange = (index, value) => {
+    const newObjectives = [...learningObjectives];
+    newObjectives[index] = value;
+    setLearningObjectives(newObjectives);
+  };
+
+  const addObjectiveRow = () => setLearningObjectives([...learningObjectives, ""]);
+  
+  const removeObjectiveRow = (index) => {
+    setLearningObjectives(learningObjectives.filter((_, i) => i !== index));
   };
 
   // FUNGSI SIMPAN PERUBAHAN
@@ -80,11 +100,12 @@ export default function CoursePage() {
           ...editData, 
           order_number: parseInt(editData.order_number) || 0,
           has_reflection: hasReflection,
-          reflection_question: reflectionQuestion
+          reflection_question: reflectionQuestion,
+          // ✅ PAYLOAD: Kirim tujuan pembelajaran yang sudah dibersihkan
+          learning_objectives: learningObjectives.filter(o => o.trim() !== "")
         };
         await updateMateri(editData.id, payload);
 
-        // ✅ PERBAIKAN: Gunakan api (Axios) bukan fetch manual agar Auth Token terkirim
         if (hasAssignment) {
           await api.post("/api/teacher/assignments/upsert", {
             materi_id: editData.id,
@@ -93,7 +114,6 @@ export default function CoursePage() {
             starter_code: assignmentType === "code" ? starterCode : ""
           });
         } else {
-          // Hapus assignment jika fitur dimatikan
           await api.delete(`/api/teacher/assignments/${editData.id}`).catch(() => {});
         }
       }
@@ -116,7 +136,6 @@ export default function CoursePage() {
       if (type === 'course') {
         await deleteCourse(id); 
       } else {
-        // ✅ PERBAIKAN: Gunakan api.delete dengan rute yang sinkron ke backend
         const endpoint = `/api/teacher/${type === 'module' ? 'modules' : 'materi'}/${id}`;
         await api.delete(endpoint);
       }
@@ -135,7 +154,7 @@ export default function CoursePage() {
       {/* MODAL EDIT UNIVERSAL */}
       {isModalOpen && editData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh] custom-scrollbar">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold uppercase tracking-widest text-blue-400 italic">Edit {editType}</h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X size={20}/></button>
@@ -172,6 +191,28 @@ export default function CoursePage() {
 
                   <input className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 text-sm" placeholder="URL Media" value={editData.video_url || ""} onChange={(e) => setEditData({...editData, video_url: e.target.value})} />
                   <textarea className="w-full bg-slate-800 p-4 rounded-xl border border-slate-700 text-sm h-32 resize-none" placeholder="Isi materi..." value={editData.content || ""} onChange={(e) => setEditData({...editData, content: e.target.value})} />
+
+                  {/* ✅ SECTION BARU: Tujuan Pembelajaran di Modal */}
+                  <div className="p-5 bg-slate-950/50 border border-slate-800 rounded-3xl space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target size={18} className="text-blue-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Tujuan Pembelajaran</span>
+                    </div>
+                    <div className="space-y-2">
+                      {learningObjectives.map((obj, oIdx) => (
+                        <div key={oIdx} className="flex gap-2">
+                          <input 
+                            className="flex-1 bg-slate-900 border border-slate-800 p-2.5 rounded-xl text-xs text-white outline-none focus:border-blue-500 transition-all"
+                            value={obj}
+                            onChange={(e) => handleObjectiveChange(oIdx, e.target.value)}
+                            placeholder="Contoh: Memahami algoritma..."
+                          />
+                          <button onClick={() => removeObjectiveRow(oIdx)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 size={14}/></button>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={addObjectiveRow} className="w-full py-2 border border-dashed border-slate-700 rounded-xl text-[9px] font-black uppercase tracking-tighter text-slate-500 hover:text-blue-400 hover:border-blue-400/40 transition-all">+ Tambah Poin Tujuan</button>
+                  </div>
 
                   <div className={`p-4 rounded-2xl border transition-all ${hasReflection ? "bg-purple-600/10 border-purple-500/50" : "bg-slate-900 border-slate-800"}`}>
                     <div className="flex items-center gap-3 mb-3">

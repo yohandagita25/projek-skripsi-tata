@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   FileText, Save, Plus, Trash2, Code, 
-  BrainCircuit, MessageSquareQuote 
+  BrainCircuit, MessageSquareQuote, X, Target 
 } from "lucide-react";
 import { api } from "@/lib/api";
 import MarkdownEditor from "@/components/teacher/MarkdownEditor";
@@ -29,7 +29,9 @@ export default function StepMateri({ modules, initialMateri = null }) {
           assignment_instruction: m.assignment ? m.assignment.instruction : "",
           starter_code: m.assignment ? m.assignment.starter_code : "",
           has_reflection: m.has_reflection || false,
-          reflection_question: m.reflection_question || ""
+          reflection_question: m.reflection_question || "",
+          // ✅ SINKRONISASI: Ambil data learning_objectives dari DB
+          learning_objectives: m.learning_objectives || []
         });
       });
       setMateriMap(newMap);
@@ -55,7 +57,9 @@ export default function StepMateri({ modules, initialMateri = null }) {
             assignment_instruction: "",
             starter_code: "",
             has_reflection: false,
-            reflection_question: ""
+            reflection_question: "",
+            // ✅ INISIALISASI: Poin tujuan kosong untuk materi baru
+            learning_objectives: [""]
         }
       ]
     });
@@ -74,6 +78,49 @@ export default function StepMateri({ modules, initialMateri = null }) {
       const updatedList = currentMateriList.map((m) =>
         m.tempId === tempId ? { ...m, [field]: value } : m
       );
+      return { ...prevMap, [moduleId]: updatedList };
+    });
+  };
+
+  // ✅ LOGIKA BARU: Kelola array Tujuan Pembelajaran
+  const handleObjectiveChange = (moduleId, tempId, objIndex, value) => {
+    setMateriMap((prevMap) => {
+      const currentMateriList = prevMap[moduleId] || [];
+      const updatedList = currentMateriList.map((m) => {
+        if (m.tempId === tempId) {
+          const newObjectives = [...(m.learning_objectives || [])];
+          newObjectives[objIndex] = value;
+          return { ...m, learning_objectives: newObjectives };
+        }
+        return m;
+      });
+      return { ...prevMap, [moduleId]: updatedList };
+    });
+  };
+
+  const addObjectiveRow = (moduleId, tempId) => {
+    setMateriMap((prevMap) => {
+      const currentMateriList = prevMap[moduleId] || [];
+      const updatedList = currentMateriList.map((m) => {
+        if (m.tempId === tempId) {
+          return { ...m, learning_objectives: [...(m.learning_objectives || []), ""] };
+        }
+        return m;
+      });
+      return { ...prevMap, [moduleId]: updatedList };
+    });
+  };
+
+  const removeObjectiveRow = (moduleId, tempId, objIndex) => {
+    setMateriMap((prevMap) => {
+      const currentMateriList = prevMap[moduleId] || [];
+      const updatedList = currentMateriList.map((m) => {
+        if (m.tempId === tempId) {
+          const filtered = m.learning_objectives.filter((_, i) => i !== objIndex);
+          return { ...m, learning_objectives: filtered };
+        }
+        return m;
+      });
       return { ...prevMap, [moduleId]: updatedList };
     });
   };
@@ -101,12 +148,13 @@ export default function StepMateri({ modules, initialMateri = null }) {
             video_url: item.video_url,
             order_number: index + 1,
             has_reflection: item.has_reflection,
-            reflection_question: item.reflection_question
+            reflection_question: item.reflection_question,
+            // ✅ PAYLOAD: Kirim array tujuan pembelajaran ke backend
+            learning_objectives: (item.learning_objectives || []).filter(o => o.trim() !== "")
           };
 
           let resMateri;
           if (item.isNew || !item.id) {
-            // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
             resMateri = await api.post("/api/teacher/materi", materiPayload);
           } else {
             resMateri = await api.put(`/api/teacher/materi/${item.id}`, materiPayload);
@@ -116,7 +164,6 @@ export default function StepMateri({ modules, initialMateri = null }) {
           const materiId = item.id || savedData.id;
 
           if (item.has_assignment && materiId) {
-            // ✅ PERBAIKAN: Gunakan prefix /api/teacher/
             await api.post("/api/teacher/assignments/upsert", {
               materi_id: materiId,
               instruction: item.assignment_instruction,
@@ -204,6 +251,41 @@ export default function StepMateri({ modules, initialMateri = null }) {
                         value={m.content} 
                         onChange={(val) => handleMateriChange(module.id, m.tempId, "content", val)} 
                       />
+                    </div>
+
+                    {/* ✅ SECTION BARU: Tujuan Pembelajaran (Self-Assessment) */}
+                    <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-[32px] space-y-4">
+                        <div className="flex items-center gap-3 mb-2">
+                             <Target size={20} className="text-blue-500" />
+                             <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Tujuan Pembelajaran / Indikator Capaian</label>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {(m.learning_objectives || []).map((obj, oIdx) => (
+                                <div key={oIdx} className="flex gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Contoh: Siswa mampu mendefinisikan variabel dengan benar" 
+                                        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-5 py-3 text-sm text-slate-200 outline-none focus:border-blue-500 transition-all"
+                                        value={obj}
+                                        onChange={(e) => handleObjectiveChange(module.id, m.tempId, oIdx, e.target.value)}
+                                    />
+                                    <button 
+                                        onClick={() => removeObjectiveRow(module.id, m.tempId, oIdx)}
+                                        className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button 
+                            onClick={() => addObjectiveRow(module.id, m.tempId)}
+                            className="mt-4 w-full py-3 border-2 border-dashed border-slate-800 rounded-xl text-slate-600 hover:text-blue-500 hover:border-blue-500/40 transition-all font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+                        >
+                            <Plus size={14} /> Tambah Indikator Tujuan
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-800/50">
