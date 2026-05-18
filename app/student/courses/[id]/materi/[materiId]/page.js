@@ -6,7 +6,8 @@ import Link from "next/link";
 import { 
   FileText, ArrowRight, ArrowLeft, 
   Loader2, X, BrainCircuit, Save, Code as CodeIcon,
-  MessageSquareQuote, ChevronDown, ChevronRight, Lock, Terminal
+  MessageSquareQuote, ChevronDown, ChevronRight, Lock, Terminal,
+  CheckCircle2 // Tambahkan ikon check
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; 
@@ -62,6 +63,9 @@ export default function MateriPage() {
   const [runCount, setRunCount] = useState(0);
   const [userInput, setUserInput] = useState("");
 
+  // ✅ STATE BARU: Tujuan Pembelajaran yang dicentang
+  const [selectedObjectives, setSelectedObjectives] = useState([]);
+
   const toggleModule = (modId) => {
     setOpenModules(prev => ({ ...prev, [modId]: !prev[modId] }));
   };
@@ -103,6 +107,7 @@ export default function MateriPage() {
           setCanGoNext(false);
           setTimeLeft(5);
           setUserReflection("");
+          setSelectedObjectives([]); // Reset centang
           setRunCount(0);
           setUserInput("");
           setUserCode(currentMateri.assignment?.starter_code || "// Tulis kodemu di sini...");
@@ -122,6 +127,8 @@ export default function MateriPage() {
               setIsSubmitted(true);
               setCanGoNext(true);
               setUserReflection(savedContent.reflection || "");
+              // ✅ RESTORE DATA: Ambil data tujuan yang sudah dicentang sebelumnya
+              setSelectedObjectives(savedContent.achieved_objectives || []);
               setRunCount(subData.data.run_count || 0);
 
               if (currentMateri.assignment?.type === 'code') {
@@ -168,22 +175,28 @@ export default function MateriPage() {
   useEffect(() => {
     const logActivity = async () => {
       try {
-        // Menghubungi backend untuk mencatat aktivitas durasi
         await api.post("/api/student/log-activity");
       } catch (err) {
         console.error("Gagal mencatat durasi belajar");
       }
     };
   
-    // Kirim sinyal setiap kali materiId berubah
     if (params?.materiId) {
       logActivity();
-      
-      // Opsional: Kirim sinyal "Keep Alive" setiap 1 menit jika siswa stay di satu halaman
       const interval = setInterval(logActivity, 60000); 
       return () => clearInterval(interval);
     }
   }, [params?.materiId]);
+
+  // ✅ LOGIKA BARU: Handle Centang Checkbox
+  const handleObjectiveTick = (objectiveText) => {
+    if (isSubmitted) return; // Kunci jika sudah terkirim
+    setSelectedObjectives(prev => 
+      prev.includes(objectiveText) 
+      ? prev.filter(item => item !== objectiveText) 
+      : [...prev, objectiveText]
+    );
+  };
 
   const onConnect = useCallback((params) => {
     if (isSubmitted) return;
@@ -246,9 +259,14 @@ export default function MateriPage() {
       : { nodes, edges };
     
     try {
+      // ✅ PAYLOAD BARU: Tambahkan achieved_objectives ke dalam content
       const res = await api.post("/api/student/submit-assignment", { 
         materi_id: materi.id, 
-        content: { task: taskContent, reflection: userReflection },
+        content: { 
+            task: taskContent, 
+            reflection: userReflection,
+            achieved_objectives: selectedObjectives // Kirim data centang
+        },
         run_count: runCount
       });
   
@@ -316,10 +334,40 @@ export default function MateriPage() {
               <div className="mt-16 p-10 rounded-[40px] bg-purple-600/5 border border-purple-500/20 shadow-2xl relative">
                 <div className="flex items-center gap-3 mb-6">
                   <MessageSquareQuote className="text-purple-400" size={28} />
-                  <span className="text-xs font-black text-purple-400 uppercase tracking-widest italic">Refleksi</span>
+                  <span className="text-xs font-black text-purple-400 uppercase tracking-widest italic">Refleksi & Evaluasi Mandiri</span>
                 </div>
+
+                {/* ✅ BAGIAN BARU: Self-Assessment Checkbox */}
+                {materi?.learning_objectives && materi.learning_objectives.length > 0 && (
+                    <div className="mb-10 p-8 bg-slate-950/50 border border-slate-800 rounded-[32px]">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-blue-500 mb-6 italic">
+                             Capaian Pembelajaran: Apa saja yang sudah kamu pahami?
+                        </label>
+                        <div className="grid grid-cols-1 gap-3">
+                            {materi.learning_objectives.map((obj, index) => (
+                                <div 
+                                    key={index} 
+                                    onClick={() => handleObjectiveTick(obj)}
+                                    className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 ${
+                                        selectedObjectives.includes(obj) 
+                                        ? "bg-blue-600/10 border-blue-500/50 text-white shadow-[0_0_20px_rgba(37,99,235,0.05)]" 
+                                        : "bg-slate-900/50 border-slate-800 text-slate-500"
+                                    } ${!isSubmitted ? "cursor-pointer hover:border-slate-600" : "opacity-80 cursor-default"}`}
+                                >
+                                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                        selectedObjectives.includes(obj) ? "bg-blue-500 border-blue-500" : "border-slate-700"
+                                    }`}>
+                                        {selectedObjectives.includes(obj) && <CheckCircle2 size={16} className="text-white" />}
+                                    </div>
+                                    <span className="text-sm font-bold italic tracking-tight">{obj}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <h5 className="text-white font-bold text-2xl mb-6">{materi.reflection_question}</h5>
-                <textarea className="w-full bg-slate-950 border border-slate-800 p-8 rounded-[32px] text-white text-lg h-40 outline-none" value={userReflection} onChange={(e) => setUserReflection(e.target.value)} placeholder="Tulis responmu..." />
+                <textarea className="w-full bg-slate-950 border border-slate-800 p-8 rounded-[32px] text-white text-lg h-40 outline-none" value={userReflection} onChange={(e) => setUserReflection(e.target.value)} placeholder="Tulis responmu..." readOnly={isSubmitted} />
                 <div className="mt-8 flex justify-end">
                   <button onClick={handleSendAssignment} className="bg-purple-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95">
                     <Save size={18} /> {isSubmitted ? "Perbarui" : "Kirim"}
@@ -328,7 +376,6 @@ export default function MateriPage() {
               </div>
             )}
 
-            {/* Assignment Card */}
             {/* Assignment Card */}
             {materi?.assignment && (
               <div className="mt-16 p-10 rounded-[40px] bg-blue-600/5 border border-blue-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-10">
@@ -383,7 +430,6 @@ export default function MateriPage() {
                             onDrop={onDrop}
                             onDragOver={onDragOver}
                             nodeTypes={nodeTypes}
-                            // AKTIFKAN LOOSE CONNECTION Agar bisa nyambung antar source-source
                             connectionMode="loose" 
                             deleteKeyCode={isSubmitted ? null : ["Backspace", "Delete"]}
                             fitView
