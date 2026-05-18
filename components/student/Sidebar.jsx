@@ -18,8 +18,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   // Pastikan path di sini sesuai dengan struktur folder app/student/...
   const menu = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/student/dashboard" },
-    { name: "Courses", icon: BookOpen, path: "/student/courses" },
     { name: "Challenge", icon: Trophy, path: "/student/challenge" },
+    { name: "Courses", icon: BookOpen, path: "/student/courses" },
     { name: "Progress", icon: LineChart, path: "/student/progress" }
   ];
 
