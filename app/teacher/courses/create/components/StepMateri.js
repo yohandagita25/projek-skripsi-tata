@@ -183,15 +183,15 @@ export default function StepMateri({ modules, initialMateri = null }) {
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Tipe Media</label>
                         <select className="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl text-white outline-none text-sm font-bold cursor-pointer focus:border-blue-500 transition-all" value={m.type} onChange={(e) => handleMateriChange(module.id, m.tempId, "type", e.target.value)}>
-                          <option value="text">📄 Artikel / Modul Teks</option>
-                          <option value="video">🎥 Video Pembelajaran</option>
+                          <option value="text">Normal Teks</option>
+                          <option value="video">Media Pembelajaran</option>
                         </select>
                       </div>
                     </div>
 
                     {m.type === "video" && (
                       <div className="space-y-2 animate-in slide-in-from-top-2">
-                        <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">YouTube URL</label>
+                        <label className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">URL Media</label>
                         <input placeholder="https://www.youtube.com/watch?v=..." className="w-full bg-slate-900 border border-blue-500/30 p-4 rounded-2xl text-white outline-none focus:border-blue-500 text-sm" value={m.video_url} onChange={(e) => handleMateriChange(module.id, m.tempId, "video_url", e.target.value)} />
                       </div>
                     )}
