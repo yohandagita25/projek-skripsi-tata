@@ -131,7 +131,7 @@ export default function ClassCompetencyRadar() {
               content={<CustomTooltip />} 
               cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
             />
-            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'KKM 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
+            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'GOAL 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
             
             <Bar dataKey="percentage" radius={[12, 12, 0, 0]} barSize={50}>
               {data.map((entry, index) => (
