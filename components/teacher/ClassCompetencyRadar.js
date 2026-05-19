@@ -140,7 +140,7 @@ export default function ClassCompetencyRadar() {
         </ResponsiveContainer>
       </div>
 
-      {/* AUTOMATED INSIGHT */}
+      {/* - AUTOMATED INSIGHT - */}
       <div className="mt-10 p-6 bg-slate-950/50 border border-slate-800 rounded-[32px] flex items-start gap-4">
         <div className="bg-blue-500/20 p-3 rounded-2xl text-blue-500">
            <AlertCircle size={20} />
