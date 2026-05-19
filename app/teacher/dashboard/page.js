@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, BarChart, Bar, Cell // ✅ Tambahkan BarChart, Bar, dan Cell
+  CartesianGrid, BarChart, Bar, Cell
 } from "recharts";
 import { 
   BookOpen, Users, Layout, Loader2, ChevronDown, 
-  LayoutDashboard, TrendingUp, AlertCircle 
+  LayoutDashboard, TrendingUp 
 } from "lucide-react";
+// ✅ Memastikan menggunakan instance api untuk token auth
 import { api } from "@/lib/api";
 
 export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  
   const [stats, setStats] = useState({
     courses: 0,
     students: 0,
@@ -23,11 +26,9 @@ export default function TeacherDashboard() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState("");
   const [chartData, setChartData] = useState([]);
-  
-  // ✅ STATE BARU: Untuk Analitik Kompetensi Kelas
   const [classStats, setClassStats] = useState([]);
-  const [statsLoading, setStatsLoading] = useState(false);
 
+  // 1. FETCH STATISTIK UTAMA & LIST KURSUS
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -42,6 +43,7 @@ export default function TeacherDashboard() {
         });
         
         setCourses(data.courseList || []);
+        
         if (data.courseList && data.courseList.length > 0) {
           setSelectedCourse(data.courseList[0].id);
         }
@@ -55,37 +57,41 @@ export default function TeacherDashboard() {
     fetchDashboardData();
   }, []);
 
+  // 2. FETCH GRAFIK PROGRES & ANALITIK KOMPETENSI (Berdasarkan Kursus Terpilih)
   useEffect(() => {
     if (!selectedCourse) return;
 
-    const fetchChartAndCompetency = async () => {
+    const fetchAnalytics = async () => {
       setChartLoading(true);
       setStatsLoading(true);
       try {
-        // 1. Ambil data progres modul (Grafik Area)
+        // Ambil Data Progres Modul (Area Chart)
         const resProgress = await api.get(`/api/teacher/course-progress/${selectedCourse}`);
         const resultProgress = resProgress.data?.data || resProgress.data || [];
         setChartData(Array.isArray(resultProgress) ? resultProgress : []);
 
-        // 2. ✅ Ambil data Kompetensi Kelas (Grafik Batang)
+        // Ambil Data Kompetensi Kelas (Bar Chart)
         const resCompetency = await api.get("/api/teacher/class-competency");
         const resultComp = resCompetency.data?.data || [];
-        // Map data untuk menghitung persentase
+        
+        // Mapping persentase untuk grafik batang
         const formattedComp = resultComp.map(item => ({
           ...item,
-          percentage: Math.round((item.total_students_understood / item.total_students) * 100)
+          percentage: Math.round((parseInt(item.total_students_understood) / parseInt(item.total_students)) * 100) || 0
         }));
         setClassStats(formattedComp);
 
       } catch (err) {
-        console.error("Gagal mengambil data grafik:", err);
+        console.error("Gagal mengambil data analitik:", err);
+        setChartData([]);
+        setClassStats([]);
       } finally {
         setChartLoading(false);
         setStatsLoading(false);
       }
     };
 
-    fetchChartAndCompetency();
+    fetchAnalytics();
   }, [selectedCourse]);
 
   if (loading) {
@@ -111,7 +117,7 @@ export default function TeacherDashboard() {
         <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4">
           <LayoutDashboard className="text-blue-500" size={40} />Teacher Dashboard
         </h1>
-        <p className="text-slate-500 mt-2">Pantau perkembangan kursus dan keaktifan siswa Anda.</p>
+        <p className="text-slate-500 mt-2 font-medium">Pantau perkembangan kursus dan ketuntasan indikator siswa Anda.</p>
       </div>
 
       {/* STAT CARDS */}
@@ -130,28 +136,31 @@ export default function TeacherDashboard() {
         ))}
       </div>
 
-      {/* CHART SECTION: PROGRES MODUL (AREA CHART) */}
-      <div className="bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] shadow-sm backdrop-blur-sm">
+      {/* SECTION 1: AREA CHART (MODUL PROGRESS) */}
+      <div className="bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] shadow-sm backdrop-blur-sm relative">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
           <div>
             <h2 className="font-black text-xl text-white uppercase tracking-tight italic">Progres Penyelesaian Modul</h2>
-            <p className="text-slate-500 text-xs mt-1">Siswa yang menyelesaikan setiap modul</p>
+            <p className="text-slate-500 text-xs mt-1">Jumlah siswa yang telah menyelesaikan setiap modul</p>
           </div>
+
           <div className="relative">
             <select 
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="appearance-none bg-slate-800 border border-slate-700 text-white px-8 py-4 pr-14 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-blue-500 cursor-pointer shadow-xl"
+              className="appearance-none bg-slate-800 border border-slate-700 text-white px-8 py-4 pr-14 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-blue-500 transition-all cursor-pointer shadow-xl"
             >
-              {courses.map((course) => (<option key={course.id} value={course.id}>{course.title}</option>))}
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>{course.title}</option>
+              ))}
             </select>
-            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={18} />
           </div>
         </div>
 
-        <div className="h-[380px] w-full relative">
+        <div className="h-[350px] w-full relative">
           {chartLoading && (
-            <div className="absolute inset-0 bg-slate-950/50 z-10 flex items-center justify-center rounded-3xl backdrop-blur-sm">
+            <div className="absolute inset-0 bg-slate-900/50 z-10 flex items-center justify-center rounded-3xl backdrop-blur-sm">
               <Loader2 className="animate-spin text-blue-500" size={32} />
             </div>
           )}
@@ -163,32 +172,31 @@ export default function TeacherDashboard() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.5} />
-              <XAxis dataKey="module_name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dy={15} fontWeight="900"/>
+              <XAxis dataKey="module_name" stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dy={15} fontWeight="900" textTransform="uppercase"/>
               <YAxis stroke="#475569" fontSize={10} tickLine={false} axisLine={false} dx={-10} fontWeight="900"/>
               <Tooltip 
                 contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b", borderRadius: "20px" }}
-                itemStyle={{ color: "#3b82f6", fontWeight: "900" }}
+                itemStyle={{ color: "#3b82f6", fontWeight: "900", textTransform: "uppercase" }}
               />
-              <Area type="monotone" dataKey="completed_count" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorStudents)" dot={{ r: 6, fill: "#3b82f6" }} />
+              <Area type="monotone" dataKey="completed_count" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorStudents)" dot={{ r: 6, fill: "#3b82f6", stroke: "#0f172a", strokeWidth: 3 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* ✅ NEW SECTION: CLASS COMPETENCY RADAR (BAR CHART) */}
+      {/* SECTION 2: BAR CHART (CLASS COMPETENCY RADAR) */}
       <div className="bg-slate-900/40 border border-slate-800 p-10 rounded-[48px] shadow-2xl backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div className="flex items-center gap-3 mb-10">
+          <TrendingUp className="text-blue-500" size={28} />
           <div>
-            <h2 className="font-black text-xl text-white uppercase tracking-tight italic flex items-center gap-3">
-              <TrendingUp className="text-blue-500" size={28} /> Class Competency Radar
-            </h2>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Analisis Ketuntasan Indikator Pembelajaran Seluruh Siswa</p>
+            <h2 className="font-black text-xl text-white uppercase tracking-tight italic">Class Competency Radar</h2>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-1">Persentase Ketuntasan Indikator Pembelajaran Seluruh Siswa</p>
           </div>
         </div>
 
-        <div className="h-[450px] w-full relative">
+        <div className="h-[400px] w-full relative">
           {statsLoading && (
-             <div className="absolute inset-0 bg-slate-950/50 z-10 flex items-center justify-center rounded-3xl backdrop-blur-sm">
+             <div className="absolute inset-0 bg-slate-900/50 z-10 flex items-center justify-center rounded-3xl backdrop-blur-sm">
                <Loader2 className="animate-spin text-blue-500" size={32} />
              </div>
           )}
@@ -218,13 +226,13 @@ export default function TeacherDashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* INSIGHT LEGEND */}
-        <div className="mt-8 p-6 bg-slate-950/50 border border-slate-800 rounded-[32px] flex items-center gap-6">
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase text-blue-500 tracking-widest">
-            <div className="w-3 h-3 bg-blue-500 rounded-sm shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div> Tuntas (&gt;70%)
+        {/* LEGEND BOX */}
+        <div className="mt-8 p-6 bg-slate-950/50 border border-slate-800 rounded-[32px] flex items-center gap-8">
+          <div className="flex items-center gap-3 text-[9px] font-black uppercase text-blue-500 tracking-[0.2em]">
+            <div className="w-4 h-4 bg-blue-500 rounded-md shadow-[0_0_15px_rgba(59,130,246,0.4)]"></div> Tuntas (&gt;70%)
           </div>
-          <div className="flex items-center gap-2 text-[9px] font-black uppercase text-rose-500 tracking-widest">
-            <div className="w-3 h-3 bg-rose-500 rounded-sm shadow-[0_0_10px_rgba(244,63,94,0.5)]"></div> Perlu Remedial (&lt;70%)
+          <div className="flex items-center gap-3 text-[9px] font-black uppercase text-rose-500 tracking-[0.2em]">
+            <div className="w-4 h-4 bg-rose-500 rounded-md shadow-[0_0_15px_rgba(244,63,94,0.4)]"></div> Remedial (&lt;70%)
           </div>
         </div>
       </div>
