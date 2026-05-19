@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload }) => {
       <div className="bg-slate-950/95 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl shadow-2xl min-w-[300px] z-50">
         <div className="flex items-center gap-3 mb-4 border-b border-slate-800 pb-3">
           <BookOpen size={18} className="text-blue-500" />
-          <h4 className="text-sm font-black text-white uppercase tracking-tight">{materi_title || "Tanpa Judul"}</h4>
+          <h4 className="text-sm font-black text-white uppercase tracking-tight">{materi_title}</h4>
         </div>
         
         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Rincian Indikator:</p>
@@ -68,9 +68,9 @@ export default function ClassCompetencyRadar() {
             return;
         }
 
-        // --- LOGIKA GROUPING PER MODUL ---
+        // Logic Grouping tetap sama agar data per modul terkumpul
         const grouped = rawData.reduce((acc, item) => {
-          const key = item.materi_title || "Materi Umum";
+          const key = item.materi_title || "Materi Tanpa Judul";
           if (!acc[key]) {
             acc[key] = {
               materi_title: key,
@@ -86,9 +86,10 @@ export default function ClassCompetencyRadar() {
           return acc;
         }, {});
 
-        const formattedData = Object.values(grouped).map((modul, index) => ({
+        const formattedData = Object.values(grouped).map((modul) => ({
           ...modul,
-          display_label: `Modul ${index + 1}`,
+          // ✅ Gunakan nama materi langsung sebagai label
+          display_label: modul.materi_title,
           percentage: Math.round(modul.total_percentage / modul.count)
         }));
 
@@ -106,15 +107,7 @@ export default function ClassCompetencyRadar() {
   if (loading) return (
     <div className="mt-10 h-64 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[48px] border border-dashed border-slate-800">
       <Loader2 className="animate-spin mb-4 text-blue-500" size={32} />
-      <p className="font-black uppercase text-[10px] tracking-widest text-white">Menyusun Analitik Modul...</p>
-    </div>
-  );
-
-  if (error || data.length === 0) return (
-    <div className="mt-10 p-12 text-center bg-slate-900/20 border border-dashed border-slate-800 rounded-[48px]">
-        <AlertCircle className="mx-auto text-slate-700 mb-4" size={48} />
-        <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Belum Ada Data Kompetensi</p>
-        <p className="text-slate-700 text-[10px] mt-2 italic">Pastikan indikator materi sudah dibuat dan siswa sudah mengisi refleksi.</p>
+      <p className="font-black uppercase text-[10px] tracking-widest text-white">Menyusun Statistik Materi...</p>
     </div>
   );
 
@@ -133,7 +126,7 @@ export default function ClassCompetencyRadar() {
             </h3>
           </div>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-1">
-            Analisis Rata-rata per Bab (ID-1 = Input Pertama)
+            Analisis Rata-rata per Judul Materi/Bab
           </p>
         </div>
         
@@ -149,14 +142,30 @@ export default function ClassCompetencyRadar() {
 
       <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.3} />
             <XAxis 
               dataKey="display_label" 
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 10, fontWeight: 900 }}
-              dy={10}
+              // ✅ Styling Label Materi agar miring jika terlalu panjang
+              tick={({ x, y, payload }) => (
+                <g transform={`translate(${x},${y})`}>
+                  <text
+                    x={0}
+                    y={0}
+                    dy={16}
+                    textAnchor="middle"
+                    fill="#64748b"
+                    fontSize={9}
+                    fontWeight={900}
+                    className="uppercase italic"
+                  >
+                    {payload.value.length > 15 ? `${payload.value.substring(0, 12)}...` : payload.value}
+                  </text>
+                </g>
+              )}
+              interval={0}
             />
             <YAxis 
               domain={[0, 100]}
@@ -169,7 +178,7 @@ export default function ClassCompetencyRadar() {
               content={<CustomTooltip />} 
               cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
             />
-            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'Goal 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
+            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'Target 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
             
             <Bar dataKey="percentage" radius={[12, 12, 0, 0]} barSize={50}>
               {data.map((entry, index) => (
@@ -190,7 +199,7 @@ export default function ClassCompetencyRadar() {
                 <ListChecks size={16} className="text-blue-500" /> Informasi Dashboard
             </h4>
             <p className="text-xs text-slate-500 leading-relaxed italic">
-                Grafik ini menampilkan tingkat penguasaan kelas berdasarkan <span className="text-white font-bold underline">Rata-rata Indikator</span> di setiap modul. Silakan arahkan kursor (hover) ke batang grafik untuk melihat rincian capaian setiap indikator pembelajaran.
+                Sumbu X menampilkan <span className="text-white font-bold underline">Nama Materi</span>. Nilai batang adalah rata-rata ketuntasan indikator dalam materi tersebut. Arahkan kursor untuk melihat rincian indikator secara spesifik.
             </p>
         </div>
       </div>
