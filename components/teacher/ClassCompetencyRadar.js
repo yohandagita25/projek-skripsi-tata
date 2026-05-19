@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Cell, CartesianGrid, ReferenceLine
 } from 'recharts';
 import { api } from "@/lib/api";
-import { AlertCircle, CheckCircle2, TrendingUp, Loader2, Target, BrainCircuit, Activity } from "lucide-react";
+import { AlertCircle, CheckCircle2, TrendingUp, Loader2, BrainCircuit, Activity, Target, BookOpen } from "lucide-react";
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -18,9 +18,6 @@ const CustomTooltip = ({ active, payload }) => {
           <Target size={18} className="text-blue-500" />
           <h4 className="text-sm font-black text-white uppercase tracking-tight">{materi_title}</h4>
         </div>
-        
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Detail Indikator Capaian:</p>
-        
         <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
           {indicators && indicators.map((ind, idx) => (
             <div key={idx} className="flex flex-col gap-1">
@@ -41,7 +38,6 @@ const CustomTooltip = ({ active, payload }) => {
             </div>
           ))}
         </div>
-
         <div className="mt-5 pt-3 border-t border-slate-800 flex justify-between items-center">
            <span className="text-[10px] uppercase font-black text-slate-500 tracking-tighter">Rata-rata Modul</span>
            <span className="text-xl font-black text-white italic">{payload[0].value}%</span>
@@ -60,31 +56,11 @@ export default function ClassCompetencyRadar() {
     const fetchStats = async () => {
       try {
         const res = await api.get("/api/teacher/class-competency");
-        const rawData = res.data?.data || res.data || [];
+        const rawData = res.data?.data || [];
         
-        if (!Array.isArray(rawData)) return;
-
-        const grouped = rawData.reduce((acc, item) => {
-          const key = item.materi_title || "Materi";
-          if (!acc[key]) {
-            acc[key] = {
-              materi_title: key,
-              total_percentage: 0,
-              count: 0,
-              indicators: []
-            };
-          }
-          const p = Math.round((parseInt(item.total_students_understood) / parseInt(item.total_students)) * 100) || 0;
-          acc[key].total_percentage += p;
-          acc[key].count += 1;
-          acc[key].indicators.push({ name: item.indicator_name, val: p });
-          return acc;
-        }, {});
-
-        const formattedData = Object.values(grouped).map((modul) => ({
+        const formattedData = rawData.map((modul) => ({
           ...modul,
-          display_label: modul.materi_title.length > 10 ? modul.materi_title.split(' ')[0] : modul.materi_title,
-          percentage: Math.round(modul.total_percentage / modul.count)
+          display_label: modul.materi_title.length > 10 ? modul.materi_title.split(' ')[0] : modul.materi_title
         }));
 
         setData(formattedData);
@@ -100,13 +76,12 @@ export default function ClassCompetencyRadar() {
   if (loading) return (
     <div className="mt-10 h-64 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[48px] border border-dashed border-slate-800">
       <Loader2 className="animate-spin mb-4 text-blue-500" size={32} />
-      <p className="font-black uppercase text-[10px] tracking-widest text-white italic">Mengolah Data Pedagogis...</p>
+      <p className="font-black uppercase text-[10px] tracking-widest text-white italic">Syncing Data...</p>
     </div>
   );
 
-  // LOGIKA DIAGNOSTIK OTOMATIS
-  const lowModules = data.filter(d => d.percentage < 70);
   const avgClass = data.length > 0 ? Math.round(data.reduce((a, b) => a + b.percentage, 0) / data.length) : 0;
+  const lowModules = data.filter(d => d.percentage < 70);
 
   return (
     <div className="mt-10 p-8 md:p-12 bg-slate-900/40 border border-slate-800 rounded-[56px] backdrop-blur-md shadow-2xl relative overflow-hidden">
@@ -122,16 +97,13 @@ export default function ClassCompetencyRadar() {
               Capaian Kompetensi Modul
             </h3>
           </div>
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-1">
-            Data dikelompokkan berdasarkan materi utama
-          </p>
         </div>
         
         <div className="flex gap-3">
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-500">
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-500 shadow-lg">
               <CheckCircle2 size={14} /> Tuntas
            </div>
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500">
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500 shadow-lg">
               <AlertCircle size={14} /> Remedial
            </div>
         </div>
@@ -174,39 +146,34 @@ export default function ClassCompetencyRadar() {
         </ResponsiveContainer>
       </div>
 
-      {/* FOOTER: ANALISIS STRATEGIS DINAMIS (LEBIH INFORMATIF) */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* PANEL 1: KESEHATAN KELAS */}
-        <div className="p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex items-center gap-6">
+        <div className="p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex items-center gap-6 shadow-2xl">
             <div className={`p-4 rounded-2xl ${avgClass >= 70 ? 'bg-blue-500/10 text-blue-500' : 'bg-rose-500/10 text-rose-500'}`}>
                 <Activity size={28} />
             </div>
             <div>
                 <h4 className="text-[11px] font-black uppercase text-white tracking-widest mb-1">Health Metric</h4>
                 <p className="text-3xl font-black text-white italic tracking-tighter">{avgClass}%</p>
-                <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Rata-rata Penguasaan Kelas</p>
+                <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Mastery Average</p>
             </div>
         </div>
 
-        {/* PANEL 2: AUTOMATED DIAGNOSTIC */}
-        <div className={`p-8 border rounded-[32px] flex items-start gap-5 ${lowModules.length > 0 ? 'bg-rose-500/5 border-rose-500/20' : 'bg-blue-500/5 border-blue-500/20'}`}>
+        <div className={`p-8 border rounded-[32px] flex items-start gap-5 shadow-2xl ${lowModules.length > 0 ? 'bg-rose-500/5 border-rose-500/20' : 'bg-blue-500/5 border-blue-500/20'}`}>
             <div className={`p-3 rounded-2xl ${lowModules.length > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}`}>
                 <BrainCircuit size={24} />
             </div>
             <div className="flex-1">
                 <h4 className={`text-[11px] font-black uppercase tracking-widest mb-2 ${lowModules.length > 0 ? 'text-rose-500' : 'text-blue-500'}`}>
-                    {lowModules.length > 0 ? "Butuh Intervensi" : "Kondisi Optimal"}
+                    Strategic Insight
                 </h4>
                 <p className="text-xs text-slate-400 leading-relaxed italic">
                     {lowModules.length > 0 
-                      ? `Sistem mendeteksi penguasaan rendah pada modul ${lowModules.map(m => m.materi_title).join(', ')}. Disarankan melakukan penguatan materi sebelum melanjutkan ke modul baru.`
-                      : "Seluruh modul saat ini berada di atas standar KKM. Bapak dapat memberikan materi pengayaan atau melanjutkan ke level berikutnya."
+                      ? `Fokus perbaikan diperlukan pada materi: ${lowModules.map(m => m.materi_title).join(', ')}.`
+                      : "Capaian pembelajaran kelas sangat stabil. Seluruh modul telah memenuhi target ketuntasan minimum."
                     }
                 </p>
             </div>
         </div>
-
       </div>
     </div>
   );
