@@ -40,14 +40,22 @@ export default function ClassCompetencyRadar() {
         const res = await api.get("/api/teacher/class-competency");
         const rawData = res.data?.data || [];
         
-        // Memetakan data dan memberikan Label Indikator 1, 2, 3...
+        // 1. Memetakan data asli
         const formattedData = rawData.map((item, index) => ({
           ...item,
-          display_label: `Indikator ${index + 1}`, // Label sederhana di samping grafik
+          // Simpan nomor urut asli berdasarkan index database (dimulai dari 1)
+          original_index: index + 1,
           percentage: Math.round((parseInt(item.total_students_understood) / parseInt(item.total_students)) * 100) || 0
         }));
 
-        setData(formattedData);
+        // 2. Balik urutan array agar data pertama (Indikator 1) berada di atas pada grafik horizontal
+        // Karena Recharts merender data pertama dari bawah ke atas pada Layout Vertical.
+        const reversedData = [...formattedData].reverse().map((item) => ({
+          ...item,
+          display_label: `Indikator ${item.original_index}`
+        }));
+
+        setData(reversedData);
       } catch (err) {
         console.error("Gagal mengambil statistik kelas");
       } finally {
@@ -79,7 +87,7 @@ export default function ClassCompetencyRadar() {
             </h3>
           </div>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-1">
-            Hover bars to see full indicator details
+            Analisis Ketuntasan per Indikator (Indikator 1 = Urutan Pertama)
           </p>
         </div>
         
@@ -93,20 +101,19 @@ export default function ClassCompetencyRadar() {
         </div>
       </div>
 
-      <div className="h-[550px] w-full">
+      <div className="h-[600px] w-full pr-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart 
             data={data} 
             layout="vertical" 
-            margin={{ left: 0, right: 60, top: 0, bottom: 0 }}
+            margin={{ left: 20, right: 60, top: 0, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} opacity={0.2} />
             <XAxis type="number" domain={[0, 100]} hide />
             <YAxis 
               dataKey="display_label" 
               type="category" 
-              width={100} 
-              reversed={false} // Menjaga urutan tetap sesuai input (Atas ke Bawah)
+              width={120} 
               tick={{ fill: '#64748b', fontSize: 11, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase' }}
               axisLine={false}
               tickLine={false}
@@ -118,13 +125,13 @@ export default function ClassCompetencyRadar() {
             <Bar 
               dataKey="percentage" 
               radius={[0, 20, 20, 0]} 
-              barSize={28}
+              barSize={24}
             >
               {data.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.percentage >= 70 ? '#3b82f6' : '#f43f5e'}
-                  className="hover:fill-opacity-80 transition-all duration-300 cursor-help"
+                  className="hover:fill-opacity-80 transition-all duration-300 cursor-help shadow-xl"
                 />
               ))}
             </Bar>
@@ -133,13 +140,13 @@ export default function ClassCompetencyRadar() {
       </div>
 
       <div className="mt-10 p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex flex-col md:flex-row items-center gap-6">
-        <div className="p-4 bg-blue-500/10 rounded-2xl">
-           <AlertCircle className="text-blue-500" size={24} />
+        <div className="p-4 bg-blue-500/10 rounded-2xl text-blue-500">
+           <AlertCircle size={24} />
         </div>
         <div className="flex-1 text-center md:text-left">
            <h4 className="text-[10px] font-black uppercase text-white tracking-[0.2em] mb-2">Pedagogical Insight</h4>
            <p className="text-xs text-slate-400 leading-relaxed italic max-w-2xl">
-             Teks indikator disederhanakan untuk kebersihan visual. Silakan arahkan kursor (hover) pada batang grafik untuk melihat deskripsi lengkap indikator dan materi terkait.
+             Indikator diurutkan berdasarkan input materi. Arahkan kursor pada batang untuk melihat deskripsi capaian pembelajaran secara mendalam.
            </p>
         </div>
       </div>
