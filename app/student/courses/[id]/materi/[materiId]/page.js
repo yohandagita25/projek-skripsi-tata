@@ -334,11 +334,11 @@ export default function MateriPage() {
                   <span className="text-xs font-black text-purple-400 uppercase tracking-widest italic">Refleksi & Evaluasi Mandiri</span>
                 </div>
 
-                {/* ✅ RENDER CHECKBOX TUJUAN PEMBELAJARAN */}
-                {materi?.learning_objectives && materi.learning_objectives.length > 0 && (
+                {/* ✅ Tambahkan pengecekan tipe data agar tidak error jika formatnya salah */}
+                {materi?.learning_objectives && Array.isArray(materi.learning_objectives) && (
                     <div className="mb-10 p-8 bg-slate-950/50 border border-slate-800 rounded-[32px]">
                         <label className="block text-[10px] font-black uppercase tracking-widest text-blue-500 mb-6 italic">
-                             Capaian Pembelajaran: Apa saja yang sudah kamu pahami?
+                            Capaian Pembelajaran: Apa saja yang sudah kamu pahami?
                         </label>
                         <div className="grid grid-cols-1 gap-3">
                             {materi.learning_objectives.map((obj, index) => (
@@ -347,11 +347,12 @@ export default function MateriPage() {
                                     onClick={() => handleObjectiveTick(obj)}
                                     className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 ${
                                         selectedObjectives.includes(obj) 
-                                        ? "bg-blue-600/10 border-blue-500/50 text-white shadow-[0_0_20px_rgba(37,99,235,0.05)]" 
+                                        ? "bg-blue-600/10 border-blue-500/50 text-white" 
                                         : "bg-slate-900/50 border-slate-800 text-slate-500"
-                                    } ${!isSubmitted ? "cursor-pointer hover:border-slate-600" : "opacity-80 cursor-default"}`}
+                                    }`}
                                 >
-                                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                    {/* Checkbox UI */}
+                                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center ${
                                         selectedObjectives.includes(obj) ? "bg-blue-500 border-blue-500" : "border-slate-700"
                                     }`}>
                                         {selectedObjectives.includes(obj) && <CheckCircle2 size={16} className="text-white" />}
