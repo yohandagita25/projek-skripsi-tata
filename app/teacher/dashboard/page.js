@@ -10,8 +10,6 @@ import {
   LayoutDashboard 
 } from "lucide-react";
 import { api } from "@/lib/api";
-
-// Import komponen Radar yang sudah kita perbaiki UI-nya
 import ClassCompetencyRadar from "@/components/teacher/ClassCompetencyRadar";
 
 export default function TeacherDashboard() {
@@ -79,7 +77,7 @@ export default function TeacherDashboard() {
     return (
       <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500 gap-4">
         <Loader2 className="animate-spin" size={40} />
-        <p className="text-slate-500 text-sm font-black uppercase tracking-[0.3em] italic opacity-50">Syncing Dashboard...</p>
+        <p className="text-slate-500 text-sm font-black uppercase tracking-[0.3em] italic opacity-50">Loading Teacher Center...</p>
       </div>
     );
   }
@@ -96,7 +94,7 @@ export default function TeacherDashboard() {
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-900 pb-8">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 text-white">
+          <h1 className="text-4xl font-black uppercase tracking-tighter flex items-center gap-4 text-white italic">
             <LayoutDashboard className="text-blue-500" size={40} /> Teacher Center
           </h1>
           <p className="text-slate-500 mt-2 font-medium tracking-wide">Monitoring real-time progres dan kompetensi siswa.</p>
@@ -119,12 +117,12 @@ export default function TeacherDashboard() {
         ))}
       </div>
 
-      {/* SECTION 1: PROGRES MODUL (AREA CHART) */}
+      {/* SECTION 1: PROGRES MODUL */}
       <div className="bg-slate-900/40 border border-slate-800 p-10 rounded-[56px] shadow-sm backdrop-blur-md">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
           <div>
-            <h2 className="font-black text-xl text-white uppercase tracking-tight italic">Module Completion Progres</h2>
-            <p className="text-slate-500 text-xs mt-1 uppercase tracking-widest font-bold">Trend penyelesaian modul per kursus</p>
+            <h2 className="font-black text-xl text-white uppercase tracking-tight italic underline decoration-blue-500 underline-offset-8">Module Completion Progres</h2>
+            <p className="text-slate-500 text-[10px] mt-4 uppercase tracking-widest font-bold">Trend penyelesaian modul per kursus</p>
           </div>
 
           <div className="relative group">
@@ -165,11 +163,8 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* SECTION 2: CLASS COMPETENCY RADAR (KOMPONEN TERPISAH) */}
-      <div className="relative">
-         {/* Memanggil komponen radar yang sudah diperbaiki UI-nya */}
-         <ClassCompetencyRadar />
-      </div>
+      {/* SECTION 2: CLASS COMPETENCY RADAR */}
+      <ClassCompetencyRadar />
 
     </div>
   );
