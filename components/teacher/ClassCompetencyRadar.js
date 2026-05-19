@@ -146,7 +146,7 @@ export default function ClassCompetencyRadar() {
         <div className="flex-1 text-center md:text-left">
            <h4 className="text-[10px] font-black uppercase text-white tracking-[0.2em] mb-2">Pedagogical Insight</h4>
            <p className="text-xs text-slate-400 leading-relaxed italic max-w-2xl">
-             Indikator diurutkan berdasarkan input materi. Arahkan kursor pada batang untuk melihat deskripsi capaian pembelajaran secara mendalam.
+             Arahkan kursor pada batang untuk melihat deskripsi capaian pembelajaran secara mendalam.
            </p>
         </div>
       </div>
