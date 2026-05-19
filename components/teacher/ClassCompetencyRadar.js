@@ -6,7 +6,7 @@ import {
   ResponsiveContainer, Cell, CartesianGrid, ReferenceLine
 } from 'recharts';
 import { api } from "@/lib/api";
-import { AlertCircle, CheckCircle2, TrendingUp, Loader2, BookOpen, ListChecks } from "lucide-react";
+import { AlertCircle, CheckCircle2, TrendingUp, Loader2, Target, BrainCircuit, Activity } from "lucide-react";
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -15,11 +15,11 @@ const CustomTooltip = ({ active, payload }) => {
     return (
       <div className="bg-slate-950/95 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl shadow-2xl min-w-[300px] z-50">
         <div className="flex items-center gap-3 mb-4 border-b border-slate-800 pb-3">
-          <BookOpen size={18} className="text-blue-500" />
+          <Target size={18} className="text-blue-500" />
           <h4 className="text-sm font-black text-white uppercase tracking-tight">{materi_title}</h4>
         </div>
         
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Rincian Indikator:</p>
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Detail Indikator Capaian:</p>
         
         <div className="space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar">
           {indicators && indicators.map((ind, idx) => (
@@ -55,7 +55,6 @@ const CustomTooltip = ({ active, payload }) => {
 export default function ClassCompetencyRadar() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -63,14 +62,10 @@ export default function ClassCompetencyRadar() {
         const res = await api.get("/api/teacher/class-competency");
         const rawData = res.data?.data || res.data || [];
         
-        if (!Array.isArray(rawData)) {
-            setData([]);
-            return;
-        }
+        if (!Array.isArray(rawData)) return;
 
-        // Logic Grouping tetap sama agar data per modul terkumpul
         const grouped = rawData.reduce((acc, item) => {
-          const key = item.materi_title || "Materi Tanpa Judul";
+          const key = item.materi_title || "Materi";
           if (!acc[key]) {
             acc[key] = {
               materi_title: key,
@@ -88,15 +83,13 @@ export default function ClassCompetencyRadar() {
 
         const formattedData = Object.values(grouped).map((modul) => ({
           ...modul,
-          // ✅ Gunakan nama materi langsung sebagai label
-          display_label: modul.materi_title,
+          display_label: modul.materi_title.length > 10 ? modul.materi_title.split(' ')[0] : modul.materi_title,
           percentage: Math.round(modul.total_percentage / modul.count)
         }));
 
         setData(formattedData);
       } catch (err) {
         console.error("Gagal memproses data modul:", err);
-        setError(true);
       } finally {
         setLoading(false);
       }
@@ -107,9 +100,13 @@ export default function ClassCompetencyRadar() {
   if (loading) return (
     <div className="mt-10 h-64 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[48px] border border-dashed border-slate-800">
       <Loader2 className="animate-spin mb-4 text-blue-500" size={32} />
-      <p className="font-black uppercase text-[10px] tracking-widest text-white">Menyusun Statistik Materi...</p>
+      <p className="font-black uppercase text-[10px] tracking-widest text-white italic">Mengolah Data Pedagogis...</p>
     </div>
   );
+
+  // LOGIKA DIAGNOSTIK OTOMATIS
+  const lowModules = data.filter(d => d.percentage < 70);
+  const avgClass = data.length > 0 ? Math.round(data.reduce((a, b) => a + b.percentage, 0) / data.length) : 0;
 
   return (
     <div className="mt-10 p-8 md:p-12 bg-slate-900/40 border border-slate-800 rounded-[56px] backdrop-blur-md shadow-2xl relative overflow-hidden">
@@ -122,50 +119,34 @@ export default function ClassCompetencyRadar() {
               <TrendingUp size={20} />
             </div>
             <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">
-              Module Mastery Analysis
+              Capaian Kompetensi Modul
             </h3>
           </div>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-1">
-            Analisis Rata-rata per Judul Materi/Bab
+            Data dikelompokkan berdasarkan materi utama
           </p>
         </div>
         
-        <div className="flex gap-3 text-white">
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">
-              <CheckCircle2 size={14} className="text-blue-500" /> Tuntas
+        <div className="flex gap-3">
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-500">
+              <CheckCircle2 size={14} /> Tuntas
            </div>
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest">
-              <AlertCircle size={14} className="text-rose-500" /> Intervensi
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500">
+              <AlertCircle size={14} /> Remedial
            </div>
         </div>
       </div>
 
       <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.3} />
             <XAxis 
               dataKey="display_label" 
               axisLine={false}
               tickLine={false}
-              // ✅ Styling Label Materi agar miring jika terlalu panjang
-              tick={({ x, y, payload }) => (
-                <g transform={`translate(${x},${y})`}>
-                  <text
-                    x={0}
-                    y={0}
-                    dy={16}
-                    textAnchor="middle"
-                    fill="#64748b"
-                    fontSize={9}
-                    fontWeight={900}
-                    className="uppercase italic"
-                  >
-                    {payload.value.length > 15 ? `${payload.value.substring(0, 12)}...` : payload.value}
-                  </text>
-                </g>
-              )}
-              interval={0}
+              tick={{ fill: '#ffffff', fontSize: 11, fontWeight: 900, textTransform: 'uppercase' }}
+              dy={12}
             />
             <YAxis 
               domain={[0, 100]}
@@ -178,14 +159,14 @@ export default function ClassCompetencyRadar() {
               content={<CustomTooltip />} 
               cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
             />
-            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'Target 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
+            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'KKM 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
             
             <Bar dataKey="percentage" radius={[12, 12, 0, 0]} barSize={50}>
               {data.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.percentage >= 70 ? '#3b82f6' : '#f43f5e'}
-                  className="hover:opacity-80 transition-all duration-300 cursor-pointer"
+                  className="hover:opacity-80 transition-all duration-300 cursor-help"
                 />
               ))}
             </Bar>
@@ -193,15 +174,39 @@ export default function ClassCompetencyRadar() {
         </ResponsiveContainer>
       </div>
 
-      <div className="mt-12 p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex items-center gap-6">
-        <div className="flex-1 text-white">
-            <h4 className="text-[11px] font-black uppercase tracking-widest mb-2 flex items-center gap-2 italic">
-                <ListChecks size={16} className="text-blue-500" /> Informasi Dashboard
-            </h4>
-            <p className="text-xs text-slate-500 leading-relaxed italic">
-                Sumbu X menampilkan <span className="text-white font-bold underline">Nama Materi</span>. Nilai batang adalah rata-rata ketuntasan indikator dalam materi tersebut. Arahkan kursor untuk melihat rincian indikator secara spesifik.
-            </p>
+      {/* FOOTER: ANALISIS STRATEGIS DINAMIS (LEBIH INFORMATIF) */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* PANEL 1: KESEHATAN KELAS */}
+        <div className="p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex items-center gap-6">
+            <div className={`p-4 rounded-2xl ${avgClass >= 70 ? 'bg-blue-500/10 text-blue-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                <Activity size={28} />
+            </div>
+            <div>
+                <h4 className="text-[11px] font-black uppercase text-white tracking-widest mb-1">Health Metric</h4>
+                <p className="text-3xl font-black text-white italic tracking-tighter">{avgClass}%</p>
+                <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Rata-rata Penguasaan Kelas</p>
+            </div>
         </div>
+
+        {/* PANEL 2: AUTOMATED DIAGNOSTIC */}
+        <div className={`p-8 border rounded-[32px] flex items-start gap-5 ${lowModules.length > 0 ? 'bg-rose-500/5 border-rose-500/20' : 'bg-blue-500/5 border-blue-500/20'}`}>
+            <div className={`p-3 rounded-2xl ${lowModules.length > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                <BrainCircuit size={24} />
+            </div>
+            <div className="flex-1">
+                <h4 className={`text-[11px] font-black uppercase tracking-widest mb-2 ${lowModules.length > 0 ? 'text-rose-500' : 'text-blue-500'}`}>
+                    {lowModules.length > 0 ? "Butuh Intervensi" : "Kondisi Optimal"}
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed italic">
+                    {lowModules.length > 0 
+                      ? `Sistem mendeteksi penguasaan rendah pada modul ${lowModules.map(m => m.materi_title).join(', ')}. Disarankan melakukan penguatan materi sebelum melanjutkan ke modul baru.`
+                      : "Seluruh modul saat ini berada di atas standar KKM. Bapak dapat memberikan materi pengayaan atau melanjutkan ke level berikutnya."
+                    }
+                </p>
+            </div>
+        </div>
+
       </div>
     </div>
   );
