@@ -193,7 +193,7 @@ export default function MateriPage() {
 
   // HANDLER CHECKBOX
   const handleObjectiveTick = (objectiveText) => {
-    if (isSubmitted) return;
+    //if (isSubmitted) return;
     setSelectedObjectives(prev => 
       prev.includes(objectiveText) 
       ? prev.filter(item => item !== objectiveText) 
@@ -367,7 +367,7 @@ export default function MateriPage() {
                 )}
 
                 <h5 className="text-white font-bold text-2xl mb-6">{materi.reflection_question}</h5>
-                <textarea className="w-full bg-slate-950 border border-slate-800 p-8 rounded-[32px] text-white text-lg h-40 outline-none" value={userReflection} onChange={(e) => setUserReflection(e.target.value)} placeholder="Tulis responmu..." readOnly={isSubmitted} />
+                <textarea className="w-full bg-slate-950 border border-slate-800 p-8 rounded-[32px] text-white text-lg h-40 outline-none" value={userReflection} onChange={(e) => setUserReflection(e.target.value)} placeholder="Tulis responmu..." readOnly={false} />
                 <div className="mt-8 flex justify-end">
                   <button onClick={handleSendAssignment} className="bg-purple-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95">
                     <Save size={18} /> {isSubmitted ? "Perbarui" : "Kirim"}
