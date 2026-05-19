@@ -6,26 +6,47 @@ import {
   ResponsiveContainer, Cell, CartesianGrid, ReferenceLine
 } from 'recharts';
 import { api } from "@/lib/api";
-import { AlertCircle, CheckCircle2, TrendingUp, Loader2, Lightbulb, Target } from "lucide-react";
+import { AlertCircle, CheckCircle2, TrendingUp, Loader2, BookOpen, ListChecks } from "lucide-react";
 
+// Tooltip yang menampilkan rincian indikator di dalam satu modul
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
+    const { materi_title, indicators } = payload[0].payload;
+    
     return (
-      <div className="bg-slate-950/95 backdrop-blur-xl border border-slate-800 p-5 rounded-2xl shadow-2xl max-w-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <Target size={12} className="text-blue-500" />
-          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">
-            {payload[0].payload.materi_title}
-          </p>
+      <div className="bg-slate-950/95 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl shadow-2xl min-w-[300px]">
+        <div className="flex items-center gap-3 mb-4 border-b border-slate-800 pb-3">
+          <BookOpen size={18} className="text-blue-500" />
+          <h4 className="text-sm font-black text-white uppercase tracking-tight">{materi_title}</h4>
         </div>
-        <p className="text-sm font-bold text-white leading-relaxed mb-4">
-          {payload[0].payload.indicator_name}
-        </p>
-        <div className="flex items-center justify-between border-t border-slate-800 pt-3">
-           <span className="text-[10px] uppercase font-black text-slate-500">Mastery Level</span>
-           <span className={`text-2xl font-black ${payload[0].value >= 70 ? 'text-blue-500' : 'text-rose-500'}`}>
-             {payload[0].value}%
-           </span>
+        
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 italic">Rincian Indikator:</p>
+        
+        <div className="space-y-3">
+          {indicators.map((ind, idx) => (
+            <div key={idx} className="flex flex-col gap-1">
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-300 font-medium leading-tight pr-4 flex-1">
+                  {idx + 1}. {ind.name}
+                </span>
+                <span className={`font-black ${ind.val >= 70 ? 'text-blue-500' : 'text-rose-500'}`}>
+                  {ind.val}%
+                </span>
+              </div>
+              {/* Progress bar mini untuk tiap indikator */}
+              <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${ind.val >= 70 ? 'bg-blue-500' : 'bg-rose-500'}`} 
+                  style={{ width: `${ind.val}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 pt-3 border-t border-slate-800 flex justify-between items-center">
+           <span className="text-[10px] uppercase font-black text-slate-500 tracking-tighter">Rata-rata Modul</span>
+           <span className="text-xl font-black text-white italic">{payload[0].value}%</span>
         </div>
       </div>
     );
@@ -43,18 +64,33 @@ export default function ClassCompetencyRadar() {
         const res = await api.get("/api/teacher/class-competency");
         const rawData = res.data?.data || [];
         
-        // Memastikan data diurutkan sesuai urutan masuk dari database, lalu diberi label 1 - selesai
-        const formattedData = rawData.map((item, index) => ({
-          ...item,
-          id_sort: index, // Simpan urutan asli
-          display_label: `ID-${index + 1}`,
-          percentage: Math.round((parseInt(item.total_students_understood) / parseInt(item.total_students)) * 100) || 0
+        // --- LOGIKA GROUPING PER MODUL ---
+        const grouped = rawData.reduce((acc, item) => {
+          const key = item.materi_title;
+          if (!acc[key]) {
+            acc[key] = {
+              materi_title: key,
+              total_percentage: 0,
+              count: 0,
+              indicators: []
+            };
+          }
+          const p = Math.round((parseInt(item.total_students_understood) / parseInt(item.total_students)) * 100) || 0;
+          acc[key].total_percentage += p;
+          acc[key].count += 1;
+          acc[key].indicators.push({ name: item.indicator_name, val: p });
+          return acc;
+        }, {});
+
+        const formattedData = Object.values(grouped).map((modul, index) => ({
+          ...modul,
+          display_label: `Modul ${index + 1}`,
+          percentage: Math.round(modul.total_percentage / modul.count) // Rata-rata kompetensi modul
         }));
 
-        // Pastikan urutan tetap dari Indikator 1 di paling kiri
         setData(formattedData);
       } catch (err) {
-        console.error("Gagal mengambil statistik kelas");
+        console.error("Gagal memproses data modul");
       } finally {
         setLoading(false);
       }
@@ -65,11 +101,9 @@ export default function ClassCompetencyRadar() {
   if (loading) return (
     <div className="h-64 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-[48px] border border-dashed border-slate-800">
       <Loader2 className="animate-spin mb-4" size={32} />
-      <p className="font-black uppercase text-[10px] tracking-widest text-white">Analyzing Data Sequence...</p>
+      <p className="font-black uppercase text-[10px] tracking-widest text-white">Grouping Indicators by Module...</p>
     </div>
   );
-
-  const remedialCount = data.filter(d => d.percentage < 70).length;
 
   return (
     <div className="mt-10 p-8 md:p-12 bg-slate-900/40 border border-slate-800 rounded-[56px] backdrop-blur-md shadow-2xl relative overflow-hidden">
@@ -79,35 +113,32 @@ export default function ClassCompetencyRadar() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <TrendingUp className="text-blue-500" size={20} />
+            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-500">
+              <ListChecks size={20} />
             </div>
             <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">
-              Competency Vertical Metric
+              Module Mastery Analysis
             </h3>
           </div>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-1">
-            Visualisasi Ketuntasan Belajar Klasikal (Urutan 1 ke-n)
+            Analisis Kompetensi Rata-rata per Bab/Modul
           </p>
         </div>
         
         <div className="flex gap-3">
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-500 shadow-lg shadow-blue-500/5">
-              <CheckCircle2 size={14} /> Tuntas
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-500">
+              <CheckCircle2 size={14} /> Aman
            </div>
-           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500 shadow-lg shadow-rose-500/5">
-              <AlertCircle size={14} /> Remedial
+           <div className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 border border-rose-500/20 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500">
+              <AlertCircle size={14} /> Intervensi
            </div>
         </div>
       </div>
 
-      {/* CHART - Vertical Bar (Urutan dari Kiri ke Kanan) */}
-      <div className="h-[450px] w-full">
+      {/* CHART */}
+      <div className="h-[400px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart 
-            data={data} 
-            margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-          >
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} opacity={0.3} />
             <XAxis 
               dataKey="display_label" 
@@ -115,7 +146,6 @@ export default function ClassCompetencyRadar() {
               tickLine={false}
               tick={{ fill: '#64748b', fontSize: 10, fontWeight: 900 }}
               dy={10}
-              interval={0} // Pastikan semua label ID muncul tidak tersembunyi
             />
             <YAxis 
               domain={[0, 100]}
@@ -128,14 +158,14 @@ export default function ClassCompetencyRadar() {
               content={<CustomTooltip />} 
               cursor={{ fill: 'rgba(255,255,255,0.03)' }} 
             />
-            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'right', value: 'KKM 70', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
+            <ReferenceLine y={70} stroke="#3b82f6" strokeDasharray="5 5" opacity={0.5} label={{ position: 'top', value: 'Target 70%', fill: '#3b82f6', fontSize: 10, fontWeight: 'black' }} />
             
-            <Bar dataKey="percentage" radius={[12, 12, 0, 0]} barSize={40}>
+            <Bar dataKey="percentage" radius={[12, 12, 0, 0]} barSize={50}>
               {data.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.percentage >= 70 ? '#3b82f6' : '#f43f5e'}
-                  className="hover:opacity-80 transition-all duration-300 cursor-help"
+                  className="hover:opacity-80 transition-all duration-300 cursor-pointer"
                 />
               ))}
             </Bar>
@@ -143,36 +173,20 @@ export default function ClassCompetencyRadar() {
         </ResponsiveContainer>
       </div>
 
-      {/* FOOTER INFO */}
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex items-start gap-5">
-            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 shrink-0">
-                <Lightbulb size={24} />
-            </div>
-            <div>
-                <h4 className="text-[11px] font-black uppercase text-white tracking-widest mb-2">Petunjuk Navigasi</h4>
-                <ul className="text-[11px] text-slate-500 space-y-2 leading-relaxed">
-                    <li>• Urutan <span className="text-slate-300 font-bold italic">ID-1</span> dimulai dari indikator pertama yang Bapak input di database.</li>
-                    <li>• Semakin ke kanan menunjukkan progres indikator materi selanjutnya.</li>
-                    <li>• Arahkan kursor untuk membaca teks capaian pembelajaran secara lengkap.</li>
-                </ul>
-            </div>
+      {/* FOOTER ACTION */}
+      <div className="mt-12 p-8 bg-slate-950/40 border border-slate-800 rounded-[32px] flex flex-col md:flex-row items-center gap-8">
+        <div className="flex-1">
+            <h4 className="text-[11px] font-black uppercase text-white tracking-widest mb-2 flex items-center gap-2">
+                <Lightbulb size={16} className="text-yellow-500" /> Insight Navigasi
+            </h4>
+            <p className="text-xs text-slate-500 leading-relaxed italic">
+                Grafik di atas adalah rata-rata ketuntasan dari seluruh indikator dalam satu modul. <span className="text-slate-300 font-bold">Hover batang modul</span> untuk melihat rincian persentase setiap indikator penyusunnya.
+            </p>
         </div>
-
-        <div className={`p-8 border rounded-[32px] flex items-start gap-5 transition-colors ${remedialCount > 0 ? 'bg-rose-500/5 border-rose-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`}>
-            <div className={`p-3 rounded-2xl shrink-0 ${remedialCount > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                <AlertCircle size={24} />
-            </div>
-            <div>
-                <h4 className={`text-[11px] font-black uppercase tracking-widest mb-2 ${remedialCount > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                    Analisis Strategis
-                </h4>
-                <p className="text-[11px] text-slate-400 leading-relaxed italic">
-                    {remedialCount > 0 
-                      ? `Terdapat ${remedialCount} indikator yang belum tuntas secara klasikal. Prioritaskan pendalaman materi pada ID tersebut sebelum beralih ke modul berikutnya.`
-                      : `Seluruh indikator telah mencapai batas KKM 70%. Target pembelajaran kelas telah terpenuhi dengan sangat baik.`
-                    }
-                </p>
+        <div className="flex gap-4 border-l border-slate-800 pl-8 hidden md:flex">
+            <div className="text-center">
+                <p className="text-2xl font-black text-white italic">{data.length}</p>
+                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Total Bab</p>
             </div>
         </div>
       </div>
