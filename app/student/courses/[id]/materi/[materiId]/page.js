@@ -7,7 +7,7 @@ import {
   FileText, ArrowRight, ArrowLeft, 
   Loader2, X, BrainCircuit, Save, Code as CodeIcon,
   MessageSquareQuote, ChevronDown, ChevronRight, Lock, Terminal,
-  CheckCircle2 // ✅ Ikon untuk checkbox
+  CheckCircle2 
 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; 
@@ -99,12 +99,13 @@ export default function MateriPage() {
           const currentMod = currentCourse.modules.find(mod => mod.materi?.some(mat => mat.id === currentMateri.id));
           if (currentMod) setOpenModules(prev => ({ ...prev, [currentMod.id]: true }));
 
+          // Reset status default
           setIsSubmitted(false);
           setShowWorkspace(false);
           setCanGoNext(false);
           setTimeLeft(5);
           setUserReflection("");
-          setSelectedObjectives([]); // Reset centang
+          setSelectedObjectives([]); // Reset centang sebelum restore
           setRunCount(0);
           setUserInput("");
           setUserCode(currentMateri.assignment?.starter_code || "// Tulis kodemu di sini...");
@@ -112,6 +113,7 @@ export default function MateriPage() {
           setEdges([]);
           setTerminalOutput("");
 
+          // RESTORE DATA DARI DATABASE
           try {
             const subRes = await api.get(`/api/student/submission/${params.materiId}`);
             const subData = subRes.data;
@@ -125,8 +127,10 @@ export default function MateriPage() {
               setCanGoNext(true);
               setUserReflection(savedContent.reflection || "");
               
-              // ✅ RESTORE DATA CHECKBOX
-              setSelectedObjectives(savedContent.achieved_objectives || []);
+              // ✅ RESTORE DATA CENTANG
+              if (savedContent.achieved_objectives) {
+                setSelectedObjectives(savedContent.achieved_objectives);
+              }
               
               setRunCount(subData.data.run_count || 0);
 
@@ -171,6 +175,7 @@ export default function MateriPage() {
     } else { setCanGoNext(isSubmitted); }
   }, [timeLeft, materi, isSubmitted]);
 
+  // LOG ACTIVITY
   useEffect(() => {
     const logActivity = async () => {
       try {
@@ -179,7 +184,6 @@ export default function MateriPage() {
         console.error("Gagal mencatat durasi belajar");
       }
     };
-  
     if (params?.materiId) {
       logActivity();
       const interval = setInterval(logActivity, 60000); 
@@ -187,7 +191,7 @@ export default function MateriPage() {
     }
   }, [params?.materiId]);
 
-  // ✅ HANDLER CHECKBOX
+  // HANDLER CHECKBOX
   const handleObjectiveTick = (objectiveText) => {
     if (isSubmitted) return;
     setSelectedObjectives(prev => 
@@ -263,7 +267,7 @@ export default function MateriPage() {
         content: { 
             task: taskContent, 
             reflection: userReflection,
-            achieved_objectives: selectedObjectives // ✅ Kirim data centang
+            achieved_objectives: selectedObjectives // Kirim data centang
         },
         run_count: runCount
       });
@@ -325,7 +329,7 @@ export default function MateriPage() {
               </article>
             </div>
 
-            {/* SEKSI REFLEKSI */}
+            {/* SEKSI REFLEKSI & SELF-ASSESSMENT */}
             {materi?.has_reflection && (
               <div className="mt-16 p-10 rounded-[40px] bg-purple-600/5 border border-purple-500/20 shadow-2xl relative">
                 <div className="flex items-center gap-3 mb-6">
@@ -388,7 +392,7 @@ export default function MateriPage() {
               </div>
             )}
 
-            {/* WORKSPACE */}
+            {/* WORKSPACE AREA */}
             {showWorkspace && materi?.assignment && (
               <div className="mt-10 bg-slate-900 border border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-[800px] shadow-2xl relative">
                 {isSubmitted && (
